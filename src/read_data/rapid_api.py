@@ -41,3 +41,8 @@ def get_full_time_positions(username: str):
 def get_posts(username: str):
     data= services['activity_posts_service'].get_posts_by_username(username)
     return data
+
+@router.get("/job-tracker")
+def job_tracker():
+    data= services['activity_job_track'].get_all_jobs()
+    return data

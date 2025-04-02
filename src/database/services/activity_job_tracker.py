@@ -52,3 +52,13 @@ class JobTrackerService:
         except SQLAlchemyError:
             self.db.rollback()
             raise
+    
+    def get_all_jobs(self):
+        """
+        Retrieve all job tracker entries from the database.
+        """
+        try:
+            return self.db.query(JobTracker).order_by(JobTracker.created_at.desc()).all()
+        except SQLAlchemyError:
+            self.db.rollback()
+            raise
