@@ -27,8 +27,11 @@ async def get_linkedin_data(req: ActivityRequest):
         job_id = services['activity_job_track'].create_job_entry(req.model_dump())
         print(job_id)
 
-        if req.profile_info == "yes":
-            response_data["profile"] = linkedin.extract_clean_profile(req.username, job_id)
+        if req.profile_info == "yes" and req.type=="person":
+            response_data["profile"] = linkedin.extract_clean_user_profile(req.username, job_id)
+        
+        if req.profile_info == "yes" and req.type=="company":
+            response_data["profile"] = linkedin.extract_clean_company_profile(req.username, job_id)
 
         if req.activity_comments == "yes":
             response_data["comments"] = linkedin.extract_comment_details(req.username, job_id)
@@ -41,8 +44,7 @@ async def get_linkedin_data(req: ActivityRequest):
                 req.username,
                 req.post_reactions,
                 req.post_comments,
-                req.upper_limit,
-                req.lower_limit
+                req.post_limit,
             )
             
         if req.post_scrap == "yes" and req.type=="company":
@@ -51,8 +53,8 @@ async def get_linkedin_data(req: ActivityRequest):
                 req.username,
                 req.post_reactions,
                 req.post_comments,
-                req.upper_limit,
-                req.lower_limit
+                req.post_limit
+                
             )
 
         # Mark job as completed

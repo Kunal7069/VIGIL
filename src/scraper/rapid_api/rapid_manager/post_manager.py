@@ -135,7 +135,69 @@ class LinkedinPostFetcher:
 
 
     
-    def get_profile_posts(self, username, post_reactions="no", post_comments="no", upper_limit=0, lower_limit=0):
+    # def get_profile_posts(self, username, post_reactions="no", post_comments="no", upper_limit=0, lower_limit=0):
+    #     """Fetches posts for a given LinkedIn username with optional reactions/comments and slicing."""
+
+    #     if not username:
+    #         return {"error": "Username is required"}
+
+    #     conn = http.client.HTTPSConnection(self.rapidapi_host)
+    #     headers = {
+    #         'x-rapidapi-key': self.rapidapi_key,
+    #         'x-rapidapi-host': self.rapidapi_host
+    #     }
+
+    #     endpoint = f"/get-profile-posts?username={username}&limit={upper_limit-lower_limit}"
+    #     conn.request("GET", endpoint, headers=headers)
+
+    #     res = conn.getresponse()
+    #     data = res.read()
+
+    #     try:
+    #         json_data = json.loads(data.decode("utf-8"))
+    #         posts = json_data.get("data", [])
+
+    #         # Adjust upper_limit if not explicitly set
+    #         if upper_limit == 0 or upper_limit > len(posts):
+    #             upper_limit = len(posts)
+
+    #         # Ensure limits are within range
+    #         lower_limit = max(0, lower_limit)
+    #         upper_limit = max(lower_limit, upper_limit)
+
+    #         filtered_data = []
+    #         for post in posts[lower_limit:upper_limit]:
+    #             if isinstance(post, dict):
+    #                 post_url = post.get("postUrl")
+    #                 share_url = post.get("shareUrl")
+
+    #                 urn = self.extract_urn(post_url)
+    #                 comments = self.get_comments(urn) if post_comments == "yes" and urn else []
+    #                 # reactions = self.get_reactions(share_url) if post_reactions == "yes" and share_url else []
+    #                 reactions = self.get_reactions(post_url) if post_reactions == "yes" and post_url else []
+    #                 temporary_data={
+    #                     "text": post.get("text"),
+    #                     "shareUrl": share_url,
+    #                     "postUrl": post_url,
+    #                     "totalreactions":post.get("totalReactionCount"),
+    #                     "totalcomments":post.get("commentsCount"),
+    #                     "media": post.get("image") if post.get("image") else post.get("resharedPost", {}).get("image"),
+    #                     "original_post_text": post.get("resharedPost", {}).get("text","No original post text available"),
+    #                     "comments": comments,
+    #                     "reactions": reactions[:10],
+    #                     "video":post.get("video") if post.get("video") else []
+    #                 }
+    #                 services['activity_posts_service'].save_post_with_details(temporary_data,username)
+    #                 filtered_data.append(temporary_data)
+
+    #         return filtered_data
+
+    #     except json.JSONDecodeError:
+    #         return {"error": "Invalid JSON response from API"}
+    
+    
+    
+    def get_profile_posts(self, username, post_reactions="no", post_comments="no", post_limit=0):
         """Fetches posts for a given LinkedIn username with optional reactions/comments and slicing."""
 
         if not username:
@@ -147,26 +209,44 @@ class LinkedinPostFetcher:
             'x-rapidapi-host': self.rapidapi_host
         }
 
-        endpoint = f"/get-profile-posts?username={username}&limit={upper_limit-lower_limit}"
-        conn.request("GET", endpoint, headers=headers)
+        all_posts = []
+        start = 0
+        pagination_token = None
 
-        res = conn.getresponse()
-        data = res.read()
+        while len(all_posts) < post_limit:
+            endpoint = f"/get-profile-posts?username={username}&start={start}"
+            if pagination_token:
+                endpoint += f"&paginationToken={pagination_token}"
 
+            conn.request("GET", endpoint, headers=headers)
+            res = conn.getresponse()
+            data = res.read()
+
+            try:
+                json_data = json.loads(data.decode("utf-8"))
+                posts = json_data.get("data", [])
+                all_posts.extend(posts)
+
+                # If post_limit is reached, break
+                if len(all_posts) >= post_limit:
+                    break
+
+                # Update pagination token for next request
+                pagination_token = json_data.get("paginationToken")
+                if not pagination_token:
+                    break  # No more pages available
+
+                start += 50  # Move to the next batch
+            
+            except json.JSONDecodeError:
+                return {"error": "Failed to parse response"}
         try:
-            json_data = json.loads(data.decode("utf-8"))
-            posts = json_data.get("data", [])
-
-            # Adjust upper_limit if not explicitly set
-            if upper_limit == 0 or upper_limit > len(posts):
-                upper_limit = len(posts)
-
-            # Ensure limits are within range
-            lower_limit = max(0, lower_limit)
-            upper_limit = max(lower_limit, upper_limit)
+            
+            posts = all_posts[:post_limit]
+            print("LEN",len(posts))
 
             filtered_data = []
-            for post in posts[lower_limit:upper_limit]:
+            for post in posts:
                 if isinstance(post, dict):
                     post_url = post.get("postUrl")
                     share_url = post.get("shareUrl")

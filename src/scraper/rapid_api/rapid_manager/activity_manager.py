@@ -28,6 +28,11 @@ class LinkedInActivityFetcher:
         """Fetch full LinkedIn profile details."""
         endpoint = f"/?username={username}"
         return self._make_request(endpoint)
+    
+    def get_company_profile(self, username):
+        """Fetch full LinkedIn profile details."""
+        endpoint = f"/get-company-details?username={username}"
+        return self._make_request(endpoint)
 
     def get_comments(self, username):
         """Fetch LinkedIn comments data."""
@@ -134,7 +139,7 @@ class LinkedInActivityFetcher:
             return {"error": f"Scraping activity reactions failed for {username}"}
 
     
-    def extract_clean_profile(self, username,job_id):
+    def extract_clean_user_profile(self, username,job_id):
         try:
             profile_data = self.get_profile(username)
             # Base fields
@@ -206,3 +211,9 @@ class LinkedInActivityFetcher:
             services['activity_job_track'].add_remark(job_id, f"Profile scraping failed: {str(e)}")
             return {"error": f"Profile scraping failed for {username}"}
 
+    
+    
+    def extract_clean_company_profile(self, username,job_id):
+        company_profile_data=self.get_company_profile(username)
+        return company_profile_data
+        

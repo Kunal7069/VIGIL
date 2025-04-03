@@ -243,8 +243,7 @@ class JobTracker(Base):
     post_comments = Column(String(10), default="no")
     post_reactions = Column(String(10), default="no")
 
-    lower_limit = Column(Integer, nullable=True)
-    upper_limit = Column(Integer, nullable=True)
+    post_limit = Column(Integer, nullable=True)
 
     status = Column(Enum(JobStatusEnum), default=JobStatusEnum.pending)
     remark = Column(Text, nullable=True)
