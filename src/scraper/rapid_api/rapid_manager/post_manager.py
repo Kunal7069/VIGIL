@@ -51,37 +51,80 @@ class LinkedinPostFetcher:
         except json.JSONDecodeError:
             return []
 
+    # def get_reactions(self, post_url):
+    #     """Fetches reactions for a given LinkedIn post URL."""
+    #     if not post_url:
+    #         return []
+
+    #     conn = http.client.HTTPSConnection(self.rapidapi_host)
+    #     headers = {
+    #         'x-rapidapi-key': self.rapidapi_key,
+    #         'x-rapidapi-host': self.rapidapi_host,
+    #         'Content-Type': "application/json"
+    #     }
+
+    #     payload = json.dumps({"url": post_url, "page": 1})
+    #     conn.request("POST", "/get-post-reactions", payload, headers)
+
+    #     res = conn.getresponse()
+    #     data = res.read()
+
+    #     try:
+    #         json_data = json.loads(data.decode("utf-8"))
+    #         reactions_list = json_data.get("data", {}).get('items', [])
+
+    #         if not isinstance(reactions_list, list):
+    #             return []
+
+    #         formatted_reactions = [
+    #             {
+    #                 "fullName": reaction.get("fullName", ""),
+    #                 "headline": reaction.get("headline", ""),
+    #                 "reactionType": reaction.get("reactionType", ""),
+    #                 "profileUrl": reaction.get("profileUrl", "")
+    #             }
+    #             for reaction in reactions_list
+    #         ]
+
+    #         return formatted_reactions
+    #     except json.JSONDecodeError:
+    #         return []
+        
     def get_reactions(self, post_url):
         """Fetches reactions for a given LinkedIn post URL."""
         if not post_url:
             return []
-
-        conn = http.client.HTTPSConnection(self.rapidapi_host)
+        match = re.search(r"(urn:li:activity:\d+)", post_url)
+        if match:
+            urn = match.group(1)
+        else:
+            urn = None
+        conn = http.client.HTTPSConnection(rapid_api_management.BASE_URL_2)
         headers = {
             'x-rapidapi-key': self.rapidapi_key,
-            'x-rapidapi-host': self.rapidapi_host,
+            'x-rapidapi-host': rapid_api_management.BASE_URL_2,
             'Content-Type': "application/json"
         }
 
-        payload = json.dumps({"url": post_url, "page": 1})
-        conn.request("POST", "/get-post-reactions", payload, headers)
+        endpoint = f"/post_reactions?reactionsUrn={urn}&page=1"
+        conn.request("GET", endpoint, headers=headers)
 
         res = conn.getresponse()
         data = res.read()
 
         try:
             json_data = json.loads(data.decode("utf-8"))
-            reactions_list = json_data.get("data", {}).get('items', [])
+            reactions_list = json_data.get('reactions', [])
 
             if not isinstance(reactions_list, list):
                 return []
 
             formatted_reactions = [
                 {
-                    "fullName": reaction.get("fullName", ""),
-                    "headline": reaction.get("headline", ""),
+                    "fullName": reaction.get("title", ""),
+                    "headline": reaction.get("subtitle", ""),
                     "reactionType": reaction.get("reactionType", ""),
-                    "profileUrl": reaction.get("profileUrl", "")
+                    "profileUrl": reaction.get("navigationUrl", "")
                 }
                 for reaction in reactions_list
             ]
@@ -130,16 +173,19 @@ class LinkedinPostFetcher:
 
                     urn = self.extract_urn(post_url)
                     comments = self.get_comments(urn) if post_comments == "yes" and urn else []
-                    reactions = self.get_reactions(share_url) if post_reactions == "yes" and share_url else []
+                    # reactions = self.get_reactions(share_url) if post_reactions == "yes" and share_url else []
+                    reactions = self.get_reactions(post_url) if post_reactions == "yes" and post_url else []
                     temporary_data={
                         "text": post.get("text"),
                         "shareUrl": share_url,
                         "postUrl": post_url,
                         "totalreactions":post.get("totalReactionCount"),
                         "totalcomments":post.get("commentsCount"),
-                        "media": post.get("image"),
+                        "media": post.get("image") if post.get("image") else post.get("resharedPost", {}).get("image"),
+                        "original_post_text": post.get("resharedPost", {}).get("text","No original post text available"),
                         "comments": comments,
-                        "reactions": reactions[:10]
+                        "reactions": reactions[:10],
+                        "video":post.get("video") if post.get("video") else []
                     }
                     services['activity_posts_service'].save_post_with_details(temporary_data,username)
                     filtered_data.append(temporary_data)

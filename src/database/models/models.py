@@ -161,6 +161,7 @@ class LinkedInPost(Base):
     post_id = Column(String(100), unique=True, nullable=True, index=True)  # extracted from postUrl
     username = Column(String(100), index=True, nullable=False)
     text = Column(Text, nullable=True)
+    original_post_text =  Column(Text, nullable=True)
     share_url = Column(String(500), nullable=True)
     post_url = Column(String(500), unique=True, nullable=False)
     total_reactions = Column(Integer, default=0)
@@ -169,12 +170,13 @@ class LinkedInPost(Base):
 
     # Relationships
     media = relationship("LinkedInPostMedia", back_populates="post", cascade="all, delete")
+    video = relationship("LinkedInPostVideo", back_populates="post", cascade="all, delete")
     comments = relationship("LinkedInPostComment", back_populates="post", cascade="all, delete")
     reactions = relationship("LinkedInPostReaction", back_populates="post", cascade="all, delete")
 
 
 class LinkedInPostMedia(Base):
-    __tablename__ = "Linkedin Post Media"
+    __tablename__ = "Linkedin Post Images"
 
     id = Column(Integer, primary_key=True, index=True)
     post_id = Column(Integer, ForeignKey("Linkedin Posts.id"), nullable=False)
@@ -183,6 +185,17 @@ class LinkedInPostMedia(Base):
     height = Column(Integer)
 
     post = relationship("LinkedInPost", back_populates="media")
+    
+class LinkedInPostVideo(Base):
+    __tablename__ = "Linkedin Post Video"
+
+    id = Column(Integer, primary_key=True, index=True)
+    post_id = Column(Integer, ForeignKey("Linkedin Posts.id"), nullable=False)
+    url = Column(String(500), nullable=False)
+    poster = Column(String(500), nullable=False)
+    duration = Column(Integer)
+
+    post = relationship("LinkedInPost", back_populates="video")
 
 
 class LinkedInPostComment(Base):
@@ -222,7 +235,7 @@ class JobTracker(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     username = Column(String(100), nullable=False, index=True)
-
+    type=  Column(String(100), nullable=False, index=True)
     activity_comments = Column(String(10), default="no")
     activity_reactions = Column(String(10), default="no")
     profile_info = Column(String(10), default="no")

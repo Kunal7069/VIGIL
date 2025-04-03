@@ -1,6 +1,7 @@
 from pydantic import BaseModel, Field, model_validator
 
 class ActivityRequest(BaseModel):
+    type : str
     username: str
     activity_comments: str = Field(..., pattern="^(yes|no)$")
     activity_reactions: str = Field(..., pattern="^(yes|no)$")

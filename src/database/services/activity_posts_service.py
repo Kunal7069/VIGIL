@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
-from database.models.models import LinkedInPost, LinkedInPostMedia, LinkedInPostComment, LinkedInPostReaction
+from database.models.models import LinkedInPost, LinkedInPostMedia, LinkedInPostComment, LinkedInPostReaction,LinkedInPostVideo
 
 
 class ActivityPostService:
@@ -21,19 +21,18 @@ class ActivityPostService:
             )
             if existing:
                 return  # Post already exists, skip saving
-
             # Create and save post
             post = LinkedInPost(
                 username=username,
                 post_url=post_data.get("postUrl"),
-                share_url=post_data.get("shareUrl"),
+                share_url=post_data.get("shareUrl","none"),
+                original_post_text = post_data.get("original_post_text","none"),
                 text=post_data.get("text", ""),
                 total_reactions=post_data.get("totalreactions", 0),
                 total_comments=post_data.get("totalcomments", 0)
             )
             self.db.add(post)
             self.db.flush()  # Get post.id before commit
-
             # Save comments
             for comment in post_data.get("comments", []):
                 self.db.add(LinkedInPostComment(
@@ -43,16 +42,24 @@ class ActivityPostService:
                     title=comment.get("title", ""),
                     text=comment.get("text", "")
                 ))
-
             # Save media
-            for media in post_data.get("media", []):
+            for media in post_data.get("media", [])or []:
                 self.db.add(LinkedInPostMedia(
                     post_id=post.id,
                     url=media.get("url"),
                     width=media.get("width"),
                     height=media.get("height")
                 ))
-
+            
+            # Save video
+            for video in post_data.get("video", [])or []:
+                self.db.add(LinkedInPostVideo(
+                    post_id=post.id,
+                    url=video.get("url"),
+                    poster=video.get("poster"),
+                    duration=video.get("duration")
+                ))
+           
             # Save reactions
             for reaction in post_data.get("reactions", []):
                 self.db.add(LinkedInPostReaction(
@@ -64,7 +71,7 @@ class ActivityPostService:
                 ))
 
             self.db.commit()
-
+           
         except (IntegrityError, SQLAlchemyError, Exception):
             self.db.rollback()
             raise
@@ -85,6 +92,7 @@ class ActivityPostService:
                 result.append({
                     "post_id": post.id,
                     "text": post.text,
+                    "original_post_text":post.original_post_text,
                     "post_url": post.post_url,
                     "share_url": post.share_url,
                     "total_reactions": post.total_reactions,
@@ -105,6 +113,14 @@ class ActivityPostService:
                             "height": m.height
                         }
                         for m in post.media
+                    ],
+                    "video": [
+                        {
+                            "url": m.url,
+                            "poster": m.poster,
+                            "duration": m.duration
+                        }
+                        for m in post.video
                     ],
                     "reactions": [
                         {

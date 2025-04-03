@@ -4,6 +4,7 @@ from pydantic import BaseModel, Field, model_validator
 from dotenv import load_dotenv
 from scraper.rapid_api.rapid_manager.activity_manager import LinkedInActivityFetcher
 from scraper.rapid_api.rapid_manager.post_manager import LinkedinPostFetcher  
+from scraper.rapid_api.rapid_manager.company_manager import CompanyPostFetcher
 from scraper.rapid_api.model.rapid_model import ActivityRequest
 from database.main import services
 # Load environment variables
@@ -16,7 +17,7 @@ router = APIRouter()
 RAPID_API_KEY = os.getenv("RAPID_API_KEY")
 linkedin = LinkedInActivityFetcher(RAPID_API_KEY)
 post_fetcher = LinkedinPostFetcher(RAPID_API_KEY)
-
+company_post_fetcher = CompanyPostFetcher(RAPID_API_KEY)
 
 @router.post("/get-activity-data")
 async def get_linkedin_data(req: ActivityRequest):
@@ -35,8 +36,18 @@ async def get_linkedin_data(req: ActivityRequest):
         if req.activity_reactions == "yes":
             response_data["reactions"] = linkedin.extract_likes_details(req.username, job_id)
 
-        if req.post_scrap == "yes":
+        if req.post_scrap == "yes" and req.type=="person":
             response_data["posts"] = post_fetcher.get_profile_posts(
+                req.username,
+                req.post_reactions,
+                req.post_comments,
+                req.upper_limit,
+                req.lower_limit
+            )
+            
+        if req.post_scrap == "yes" and req.type=="company":
+            print("COMPANY")
+            response_data["posts"] = company_post_fetcher.get_company_posts(
                 req.username,
                 req.post_reactions,
                 req.post_comments,
