@@ -2,7 +2,7 @@ import http.client
 import json
 from settings.rapid_api_management import rapid_api_management
 from database.main import services
-
+import time
 class LinkedInActivityFetcher:
     def __init__(self, api_key):
         self.api_key = api_key
@@ -24,6 +24,57 @@ class LinkedInActivityFetcher:
         except json.JSONDecodeError:
             return {"error": "Failed to parse JSON", "response": data}
 
+    # def get_likes(self, username, post_limit):
+    #     """Fetch LinkedIn likes data."""
+    #     endpoint = f"/get-profile-likes?username={username}&start={start}"
+    #     return self._make_request(endpoint)
+    
+    def _make_request_1(self, endpoint):
+        """Helper method to make API requests with rate limiting."""
+        time.sleep(5)  # Apply delay before each request
+        
+        conn = http.client.HTTPSConnection(self.base_url)
+        conn.request("GET", endpoint, headers=self.headers)
+        res = conn.getresponse()
+        data = res.read().decode("utf-8")
+
+        try:
+            return json.loads(data)  # Convert response string to JSON
+        except json.JSONDecodeError:
+            return {"error": "Failed to parse JSON", "response": data}
+    
+    def get_likes(self, username, post_limit):
+        """Fetch LinkedIn likes data with pagination and rate limiting."""
+        all_likes = []
+        start = 0
+        pagination_token = None
+
+        while len(all_likes) < post_limit:
+            endpoint = f"/get-profile-likes?username={username}&start={start}"
+            if pagination_token:
+                endpoint += f"&paginationToken={pagination_token}"
+
+            response = self._make_request_1(endpoint)
+            
+            likes = response.get("data", [])
+    
+            all_likes.extend(likes['items'])
+
+            # Stop if we reach post_limit
+            if len(all_likes) >= post_limit:
+                break
+
+            # Update pagination token
+            pagination_token = likes.get("paginationToken")
+            if not pagination_token:
+                break  # No more pages available
+
+            start += 100  # Move to the next batch
+        
+        print("LIKES",len(all_likes[:post_limit]))
+        return all_likes[:post_limit]
+    
+    
     def get_profile(self, username):
         """Fetch full LinkedIn profile details."""
         endpoint = f"/?username={username}"
@@ -39,20 +90,17 @@ class LinkedInActivityFetcher:
         endpoint = f"/get-profile-comments?username={username}"
         return self._make_request(endpoint)
 
-    def get_likes(self, username, start=0):
-        """Fetch LinkedIn likes data."""
-        endpoint = f"/get-profile-likes?username={username}&start={start}"
-        return self._make_request(endpoint)
+    
 
     
-    def extract_comment_details(self, username,job_id):
+    def extract_comment_details(self, username,post_limit,job_id):
         try:
             """
             Extract key details from comments, inject username,
             transform to DB model format, and save to DB.
             """
             comments = self.get_comments(username)
-
+            
             if "data" in comments and isinstance(comments["data"], list) and len(comments["data"]) > 0:
                 processed_comments = []
 
@@ -80,9 +128,9 @@ class LinkedInActivityFetcher:
 
                 # Save using the service
                 
-                services['activity_comments_service'].save_batch_activity_comments(processed_comments)
+                services['activity_comments_service'].save_batch_activity_comments(processed_comments[:post_limit])
 
-                return processed_comments
+                return processed_comments[:post_limit]
             
             else:
                 return {"error": "No comments found"}
@@ -92,24 +140,20 @@ class LinkedInActivityFetcher:
             return {"error": f"Scraping activity comments failed for {username}"}
 
     
-    def extract_likes_details(self, username,job_id):
+    def extract_likes_details(self, username,post_limit,job_id):
         try:
            
             """
             Extract key details from likes, inject username,
             transform to DB model format, and save to DB.
             """
-            likes_data = self.get_likes(username)
-
-            if (
-                "data" in likes_data
-                and "items" in likes_data["data"]
-                and isinstance(likes_data["data"]["items"], list)
-                and len(likes_data["data"]["items"]) > 0
+            likes_data = self.get_likes(username,post_limit)
+            
+            if (len(likes_data) > 0
             ):
                 processed_reacions = []
 
-                for like in likes_data["data"]["items"]:
+                for like in likes_data:
                     author = like.get("author", {})
 
                     processed_reacions.append({

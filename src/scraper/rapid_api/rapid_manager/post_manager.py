@@ -263,7 +263,7 @@ class LinkedinPostFetcher:
                         "totalcomments":post.get("commentsCount"),
                         "media": post.get("image") if post.get("image") else post.get("resharedPost", {}).get("image"),
                         "original_post_text": post.get("resharedPost", {}).get("text","No original post text available"),
-                        "comments": comments,
+                        "comments": comments[:post_limit],
                         "reactions": reactions[:10],
                         "video":post.get("video") if post.get("video") else []
                     }

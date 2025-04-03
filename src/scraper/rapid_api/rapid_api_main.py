@@ -34,10 +34,10 @@ async def get_linkedin_data(req: ActivityRequest):
             response_data["profile"] = linkedin.extract_clean_company_profile(req.username, job_id)
 
         if req.activity_comments == "yes":
-            response_data["comments"] = linkedin.extract_comment_details(req.username, job_id)
+            response_data["comments"] = linkedin.extract_comment_details(req.username,req.post_limit,job_id)
 
         if req.activity_reactions == "yes":
-            response_data["reactions"] = linkedin.extract_likes_details(req.username, job_id)
+            response_data["reactions"] = linkedin.extract_likes_details(req.username,req.post_limit ,job_id)
 
         if req.post_scrap == "yes" and req.type=="person":
             response_data["posts"] = post_fetcher.get_profile_posts(
