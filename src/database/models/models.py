@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, TIMESTAMP, ForeignKey, JSON,Text, Enum, Float
+from sqlalchemy import Column, Integer, String, TIMESTAMP, ForeignKey, JSON,Text, Enum, Float,LargeBinary
 from sqlalchemy.sql import func
 from database.config.config import Base
 from sqlalchemy.orm import relationship
@@ -278,6 +278,7 @@ class LinkedInPostMedia(Base):
     id = Column(Integer, primary_key=True, index=True)
     post_id = Column(Integer, ForeignKey("Linkedin Posts.id"), nullable=False)
     url = Column(String(500), nullable=False)
+    media_data = Column(LargeBinary, nullable=True) 
     width = Column(Integer)
     height = Column(Integer)
 

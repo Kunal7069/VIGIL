@@ -47,7 +47,7 @@ class LinkedinPostFetcher:
                 }
                 for comment in comments_list
             ]
-
+            print("COMMENTS",len(formatted_comments))
             return formatted_comments[:comment_limit]
         except json.JSONDecodeError:
             return []
@@ -103,7 +103,7 @@ class LinkedinPostFetcher:
 
             except json.JSONDecodeError:
                 break  # Exit on JSON parsing error
-
+        print("REACTIONS",len(all_reactions))
         return all_reactions[:reaction_limit]
 
  
@@ -175,8 +175,8 @@ class LinkedinPostFetcher:
                         "totalcomments":post.get("commentsCount"),
                         "media": post.get("image") if post.get("image") else post.get("resharedPost", {}).get("image"),
                         "original_post_text": post.get("resharedPost", {}).get("text","No original post text available"),
-                        "comments": comments[:post_limit],
-                        "reactions": reactions[:10],
+                        "comments": comments[:comment_limit],
+                        "reactions": reactions[:reaction_limit],
                         "video":post.get("video") if post.get("video") else []
                     }
                     services['activity_posts_service'].save_post_with_details(temporary_data,username)

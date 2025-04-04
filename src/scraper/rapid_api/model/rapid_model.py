@@ -20,3 +20,7 @@ class ActivityRequest(BaseModel):
         if self.post_scrap == "yes" and self.post_limit is None:
             raise ValueError("lower_limit and upper_limit are required when post_scrap is 'yes'")
         return self
+    
+class SearchPostsRequest(BaseModel):
+    keyword: str
+    num_posts: int

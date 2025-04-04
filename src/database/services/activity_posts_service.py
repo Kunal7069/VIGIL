@@ -1,7 +1,7 @@
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from database.models.models import LinkedInPost, LinkedInPostMedia, LinkedInPostComment, LinkedInPostReaction,LinkedInPostVideo
-
+import requests
 
 class ActivityPostService:
     def __init__(self, db: Session):
@@ -43,10 +43,30 @@ class ActivityPostService:
                     text=comment.get("text", "")
                 ))
             # Save media
-            for media in post_data.get("media", [])or []:
+            # for media in post_data.get("media", [])or []:
+            #     self.db.add(LinkedInPostMedia(
+            #         post_id=post.id,
+            #         url=media.get("url"),
+            #         width=media.get("width"),
+            #         height=media.get("height")
+            #     ))
+            
+            for media in post_data.get("media", []) or []:
+                image_url = media.get("url")
+                binary_data = None
+
+                if image_url:
+                    try:
+                        response = requests.get(image_url)
+                        if response.status_code == 200:
+                            binary_data = response.content  # Convert to binary
+                    except requests.RequestException:
+                        pass  # Handle error gracefully
+
                 self.db.add(LinkedInPostMedia(
                     post_id=post.id,
-                    url=media.get("url"),
+                    url=image_url,
+                    media_data=binary_data,  # Save raw image data
                     width=media.get("width"),
                     height=media.get("height")
                 ))
