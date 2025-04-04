@@ -4,16 +4,17 @@ from database.config.config import Base
 from sqlalchemy.orm import relationship
 import enum
 
+
 class ActivityComments(Base):
-    __tablename__ = "Activity Comments"
+    __tablename__ = "activity_comments"  # Renamed to use underscores
 
     id = Column(Integer, primary_key=True, index=True)
-    username = Column(String(100), nullable=False)
+    username = Column(String(100), nullable=False, index=True)
+    
     # Author info
     first_name = Column(String(100), nullable=False)
     last_name = Column(String(100), nullable=False)
     headline = Column(String(300), nullable=True)
-    username = Column(String(100), nullable=False, index=True)
     profile_url = Column(String(300), nullable=False)
 
     # Post info
@@ -28,14 +29,45 @@ class ActivityComments(Base):
     empathy_count = Column(Integer, default=0)
     praise_count = Column(Integer, default=0)
     funny_count = Column(Integer, default=0)
-    
+
     # Engagement counts
     comments_count = Column(Integer, default=0)
     reposts_count = Column(Integer, default=0)
 
     # Timestamps
     created_at = Column(TIMESTAMP, server_default=func.now())
+
+    # Relationships
+    commentors = relationship("ActivityCommentsCommentor", back_populates="activity_comment", cascade="all, delete-orphan")
+    reactors = relationship("ActivityCommentsReactor", back_populates="activity_comment", cascade="all, delete-orphan")
+
+
+class ActivityCommentsCommentor(Base):
+    __tablename__ = "activity_comments_commentors"  # Renamed to use underscores
+
+    id = Column(Integer, primary_key=True, index=True)
+    activity_comment_id = Column(Integer, ForeignKey("activity_comments.id"), nullable=False)  # Fixed table reference
+    name = Column(String(100))
+    linkedin_url = Column(String(500))
+    title = Column(String(300))
+    text = Column(Text)
+
+    activity_comment = relationship("ActivityComments", back_populates="commentors")
+
+
+class ActivityCommentsReactor(Base):
+    __tablename__ = "activity_comments_reactors"  # Renamed to use underscores
+
+    id = Column(Integer, primary_key=True, index=True)
+    activity_comment_id = Column(Integer, ForeignKey("activity_comments.id"), nullable=False)  # Fixed table reference
+    full_name = Column(String(100))
+    headline = Column(String(300))
+    reaction_type = Column(String(50))
+    profile_url = Column(String(500))
+
+    activity_comment = relationship("ActivityComments", back_populates="reactors")
     
+
 class ActivityReactions(Base):
     __tablename__ = "Activity Reactions"
 
@@ -65,7 +97,72 @@ class ActivityReactions(Base):
 
     # Timestamps
     created_at = Column(TIMESTAMP, server_default=func.now())
+
+    # Relationships
+    commentors = relationship("ActivityReactionsCommentor", back_populates="activity_reaction", cascade="all, delete-orphan")
+    reactors = relationship("ActivityReactionsReactor", back_populates="activity_reaction", cascade="all, delete-orphan")
+
+class ActivityReactionsCommentor(Base):
+    __tablename__ = "Activity Reactions Commentors"
+
+    id = Column(Integer, primary_key=True, index=True)
+    activity_reaction_id = Column(Integer, ForeignKey("Activity Reactions.id"), nullable=False)
+    name = Column(String(100))
+    linkedin_url = Column(String(500))
+    title = Column(String(300))
+    text = Column(Text)
+
+    activity_reaction = relationship("ActivityReactions", back_populates="commentors")
+
+class ActivityReactionsReactor(Base):
+    __tablename__ = "Activity Reactions Reactors"
+
+    id = Column(Integer, primary_key=True, index=True)
+    activity_reaction_id = Column(Integer, ForeignKey("Activity Reactions.id"), nullable=False)
+    full_name = Column(String(100))
+    headline = Column(String(300))
+    reaction_type = Column(String(50))
+    profile_url = Column(String(500))
+
+    activity_reaction = relationship("ActivityReactions", back_populates="reactors")
     
+class CompanyProfile(Base):
+    __tablename__ = "Company Profile"
+
+    id = Column(Integer, primary_key=True, index=True)
+    username = Column(String(255), nullable=False)
+    name = Column(String(255), nullable=False)
+    universal_name = Column(String(255), unique=True, nullable=False)
+    linkedin_url = Column(Text, nullable=False)
+    tagline = Column(Text, nullable=True)
+    description = Column(Text, nullable=True)
+    phone = Column(String(20), nullable=True)
+    website = Column(Text, nullable=True)
+    crunchbase_url = Column(Text, nullable=True)
+
+    # Image URLs
+    logo = Column(Text, nullable=True)
+    cover = Column(Text, nullable=True)
+
+    # Company details
+    staff_count = Column(Integer, nullable=True)
+    staff_count_range = Column(String(50), nullable=True)
+    follower_count = Column(Integer, nullable=True)
+
+    # Industry and founding year
+    industries = Column(JSON, nullable=True)  # Storing industries as an array
+    founded_year = Column(Integer, nullable=True)
+
+    # Headquarters details
+    headquarter_country = Column(String(100), nullable=True)
+    headquarter_city = Column(String(100), nullable=True)
+    headquarter_postal_code = Column(String(20), nullable=True)
+    headquarter_address_line1 = Column(String(255), nullable=True)
+    headquarter_address_line2 = Column(String(255), nullable=True)
+
+    # Timestamp
+    created_at = Column(TIMESTAMP, server_default=func.now())
+
 class LinkedInProfile(Base):
     __tablename__ = "Linked Profile"
 
@@ -244,6 +341,8 @@ class JobTracker(Base):
     post_reactions = Column(String(10), default="no")
 
     post_limit = Column(Integer, nullable=True)
+    comment_limit = Column(Integer, nullable=True)
+    reaction_limit = Column(Integer, nullable=True)
 
     status = Column(Enum(JobStatusEnum), default=JobStatusEnum.pending)
     remark = Column(Text, nullable=True)

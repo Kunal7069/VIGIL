@@ -10,6 +10,8 @@ class ActivityRequest(BaseModel):
     post_comments: str = Field(..., pattern="^(yes|no)$")
     post_reactions: str = Field(..., pattern="^(yes|no)$")
     post_limit: int | None = None
+    comment_limit: int | None = None
+    reaction_limit: int | None = None
     
     
 

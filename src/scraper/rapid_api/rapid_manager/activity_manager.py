@@ -3,6 +3,17 @@ import json
 from settings.rapid_api_management import rapid_api_management
 from database.main import services
 import time
+from scraper.rapid_api.rapid_manager.post_manager import LinkedinPostFetcher
+from scraper.rapid_api.rapid_manager.company_manager import CompanyPostFetcher
+import os 
+from dotenv import load_dotenv
+
+load_dotenv()
+
+RAPID_API_KEY = os.getenv("RAPID_API_KEY")
+linkedin_post_fetcher = LinkedinPostFetcher(RAPID_API_KEY)
+company_post_fetcher = CompanyPostFetcher(RAPID_API_KEY)
+
 class LinkedInActivityFetcher:
     def __init__(self, api_key):
         self.api_key = api_key
@@ -24,11 +35,6 @@ class LinkedInActivityFetcher:
         except json.JSONDecodeError:
             return {"error": "Failed to parse JSON", "response": data}
 
-    # def get_likes(self, username, post_limit):
-    #     """Fetch LinkedIn likes data."""
-    #     endpoint = f"/get-profile-likes?username={username}&start={start}"
-    #     return self._make_request(endpoint)
-    
     def _make_request_1(self, endpoint):
         """Helper method to make API requests with rate limiting."""
         time.sleep(5)  # Apply delay before each request
@@ -71,7 +77,6 @@ class LinkedInActivityFetcher:
 
             start += 100  # Move to the next batch
         
-        print("LIKES",len(all_likes[:post_limit]))
         return all_likes[:post_limit]
     
     
@@ -93,7 +98,7 @@ class LinkedInActivityFetcher:
     
 
     
-    def extract_comment_details(self, username,post_limit,job_id):
+    def extract_comment_details(self, username,post_limit,comment_limit,reaction_limit,job_id):
         try:
             """
             Extract key details from comments, inject username,
@@ -104,9 +109,22 @@ class LinkedInActivityFetcher:
             if "data" in comments and isinstance(comments["data"], list) and len(comments["data"]) > 0:
                 processed_comments = []
 
-                for comment in comments["data"]:
+                for comment in comments["data"][:post_limit]:
+                    
                     author = comment.get("author", {})
-
+                    
+                    post_url = comment.get("postUrl")
+                
+                    urn = linkedin_post_fetcher.extract_urn(post_url)
+                    
+                    share_url = comment.get("shareUrl", "none")
+                   
+                    if share_url == "none" and post_url:
+                        share_url = company_post_fetcher.fetch_share_url(post_url)
+                    
+                    commentors = linkedin_post_fetcher.get_comments(urn,comment_limit) 
+                    reactors = linkedin_post_fetcher.get_reactions(share_url,reaction_limit) 
+                    
                     processed_comments.append({
                         "username": username,
                         "first_name": author.get("firstName", ""),
@@ -124,8 +142,10 @@ class LinkedInActivityFetcher:
                         "funny_count": comment.get("funnyCount", 0),
                         "comments_count": comment.get("commentsCount", 0),
                         "reposts_count": comment.get("repostsCount", 0),
+                        "commentors":commentors,
+                        "reactors":reactors
                     })
-
+                
                 # Save using the service
                 
                 services['activity_comments_service'].save_batch_activity_comments(processed_comments[:post_limit])
@@ -140,7 +160,7 @@ class LinkedInActivityFetcher:
             return {"error": f"Scraping activity comments failed for {username}"}
 
     
-    def extract_likes_details(self, username,post_limit,job_id):
+    def extract_likes_details(self, username,post_limit,comment_limit,reaction_limit,job_id):
         try:
            
             """
@@ -152,10 +172,17 @@ class LinkedInActivityFetcher:
             if (len(likes_data) > 0
             ):
                 processed_reacions = []
-
+               
                 for like in likes_data:
                     author = like.get("author", {})
-
+                    
+                    urn = like.get("urn")
+                    post_url = like.get("postUrl")
+            
+                    commentors = linkedin_post_fetcher.get_comments(urn,comment_limit) 
+                    
+                    reactors = linkedin_post_fetcher.get_reactions(post_url,reaction_limit) 
+                    
                     processed_reacions.append({
                         "username": username,  # tracked profile
                         "action": like.get("action", ""),
@@ -169,8 +196,10 @@ class LinkedInActivityFetcher:
                         "like_count": like.get("likeCount", 0),
                         "empathy_count": like.get("empathyCount", 0),
                         "comments_count": like.get("commentsCount", 0),
+                        "commentors":commentors,
+                        "reactors":reactors
                     })
-
+                   
                 services['activity_reactions_service'].save_batch_activity_reactions(processed_reacions)
 
                 return processed_reacions
@@ -258,6 +287,16 @@ class LinkedInActivityFetcher:
     
     
     def extract_clean_company_profile(self, username,job_id):
-        company_profile_data=self.get_company_profile(username)
-        return company_profile_data
+        try:
+            company_profile_data=self.get_company_profile(username)
+            company_data = company_profile_data['data']
+            company_data["username"] = username
+            print(company_data)
+            services['activity_profile_service'].create_company_profile(company_data)
+            return company_profile_data
+        except Exception as e:
+            services['activity_job_track'].update_status(job_id, "cancelled")
+            services['activity_job_track'].add_remark(job_id, f"Company profile scraping failed: {str(e)}")
+            return {"error": f"Company profile scraping failed for {username}"}
+
         

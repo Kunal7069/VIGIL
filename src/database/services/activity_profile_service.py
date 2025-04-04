@@ -5,7 +5,8 @@ from database.models.models import (
     LinkedInProfile,
     LinkedInEducation,
     LinkedInPosition,
-    LinkedInFullPosition
+    LinkedInFullPosition,
+    CompanyProfile
 )
 
 
@@ -135,3 +136,39 @@ class LinkedInProfileService:
             .filter(LinkedInFullPosition.username == username)
             .all()
         )
+    
+    def create_company_profile(self, company_data: dict):
+        """Creates and saves a new CompanyProfile entry in the database."""
+        company_dict = {
+        "id": int(company_data.get("id", 0)),  # Convert ID to integer if needed
+        "username": company_data.get("username"),
+        "name": company_data.get("name"),
+        "universal_name": company_data.get("universalName"),
+        "linkedin_url": company_data.get("linkedinUrl"),
+        "tagline": company_data.get("tagline"),
+        "description": company_data.get("description"),
+        "phone": company_data.get("phone"),
+        "website": company_data.get("website"),
+        "crunchbase_url": company_data.get("crunchbaseUrl", ""),
+        "logo": company_data.get("Images", {}).get("logo"),
+        "cover": company_data.get("Images", {}).get("cover"),
+        "staff_count": company_data.get("staffCount"),
+        "staff_count_range": company_data.get("staffCountRange"),
+        "follower_count": company_data.get("followerCount"),
+        "industries": company_data.get("industries", []),  # Ensure JSON format
+        "founded_year": company_data.get("founded", {}).get("year"),
+        "headquarter_country": company_data.get("headquarter", {}).get("country"),
+        "headquarter_city": company_data.get("headquarter", {}).get("city"),
+        "headquarter_postal_code": company_data.get("headquarter", {}).get("postalCode"),
+        "headquarter_address_line1": company_data.get("headquarter", {}).get("line1"),
+        "headquarter_address_line2": company_data.get("headquarter", {}).get("line2"),
+            }
+        new_company = CompanyProfile(**company_dict)
+        self.db.add(new_company)
+        self.db.commit()
+        self.db.refresh(new_company)
+        return new_company
+    
+    def get_company_by_username(self, username: str):
+        """Fetch a company profile by username."""
+        return self.db.query(CompanyProfile).filter(CompanyProfile.username == username).first()

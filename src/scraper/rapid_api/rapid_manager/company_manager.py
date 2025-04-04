@@ -22,66 +22,28 @@ class CompanyPostFetcher:
         match = re.search(r"urn:li:activity:(\d+)", post_url)
         return match.group(1) if match else None
 
-   
-    # def get_company_posts(self, username, post_reactions="no", post_comments="no", post_limit=0):
-    #     """Fetches posts for a given LinkedIn username with optional reactions/comments and slicing."""
-
-    #     if not username:
-    #         return {"error": "Username is required"}
-
-    #     conn = http.client.HTTPSConnection(self.rapidapi_host)
-    #     headers = {
-    #         'x-rapidapi-key': self.rapidapi_key,
-    #         'x-rapidapi-host': self.rapidapi_host
-    #     }
-
-    #     endpoint = f"/get-company-posts?username={username}&start=0"
-    #     conn.request("GET", endpoint, headers=headers)
-
-    #     res = conn.getresponse()
-    #     data = res.read()
-
-    #     try:
-    #         json_data = json.loads(data.decode("utf-8"))
-    #         posts = json_data.get("data", [])
-          
-    #         filtered_data = []
-    #         print("LEN",len(posts))
-    #         for post in posts:
-    #             if isinstance(post, dict):
-    #                 post_url = post.get("postUrl")
-    #                 share_url = post.get("shareUrl", "none")
-    
-    #                 urn = self.extract_urn(post_url)
+    def fetch_share_url(self,post_url):
+        """Fetches shareUrl from LinkedIn post API if not available."""
+        conn = http.client.HTTPSConnection(self.rapidapi_host)
         
-    #                 comments = linkedin_post_fetcher.get_comments(urn) if post_comments == "yes" and urn else []
-                  
-    #                 # reactions = linkedin_post_fetcher.get_reactions(share_url) if post_reactions == "yes" and share_url else []
-    #                 reactions = linkedin_post_fetcher.get_reactions(post_url) if post_reactions == "yes" and post_url else []
-                   
-    #                 temporary_data={
-    #                     "text": post.get("text"),
-    #                     "shareUrl": share_url,
-    #                     "postUrl": post_url,
-    #                     "totalreactions":post.get("totalReactionCount"),
-    #                     "totalcomments":post.get("commentsCount"),
-    #                     "media": post.get("image") if post.get("image") else post.get("resharedPost", {}).get("image"),
-    #                     "original_post_text": post.get("resharedPost", {}).get("text","No original post text available"),
-    #                     "comments": comments,
-    #                     "reactions": reactions[:10],
-    #                     "video":post.get("video") if post.get("video") else []
-    #                 }
-                   
-    #                 services['activity_posts_service'].save_post_with_details(temporary_data,username)
-    #                 filtered_data.append(temporary_data)
+        headers = {
+            'x-rapidapi-key': self.rapidapi_key,
+            'x-rapidapi-host': self.rapidapi_host
+        }
+        
+        endpoint = f"/get-post?url={post_url}"
+        conn.request("GET", endpoint, headers=headers)
+        
+        res = conn.getresponse()
+        data = res.read()
 
-    #         return filtered_data
-
-    #     except json.JSONDecodeError:
-    #         return {"error": "Invalid JSON response from API"}
+        try:
+            json_data = json.loads(data.decode("utf-8"))
+            return json_data.get("data", {}).get("shareUrl", "none")
+        except json.JSONDecodeError:
+            return "none"
     
-    
-    def get_company_posts(self, username, post_reactions="no", post_comments="no", post_limit=0):
+    def get_company_posts(self, username, post_reactions="no", post_comments="no", post_limit=0,comment_limit=0,reaction_limit=0):
         """Fetches posts for a given LinkedIn username with optional reactions/comments and slicing."""
 
         if not username:
@@ -128,19 +90,21 @@ class CompanyPostFetcher:
            
             posts = all_posts[:post_limit]
             filtered_data = []
-            print("LEN",len(posts))
+           
             for post in posts:
                 if isinstance(post, dict):
                     post_url = post.get("postUrl")
                     share_url = post.get("shareUrl", "none")
-    
-                    urn = self.extract_urn(post_url)
-        
-                    comments = linkedin_post_fetcher.get_comments(urn) if post_comments == "yes" and urn else []
-                  
-                    # reactions = linkedin_post_fetcher.get_reactions(share_url) if post_reactions == "yes" and share_url else []
-                    reactions = linkedin_post_fetcher.get_reactions(post_url) if post_reactions == "yes" and post_url else []
                    
+                    if share_url == "none" and post_url:
+                        share_url = self.fetch_share_url(post_url)
+                    
+                    urn = self.extract_urn(post_url)
+            
+                    comments = linkedin_post_fetcher.get_comments(urn,comment_limit) if post_comments == "yes" and urn else []
+                    
+                    reactions = linkedin_post_fetcher.get_reactions(share_url,reaction_limit) if post_reactions == "yes" and post_url else []
+                    
                     temporary_data={
                         "text": post.get("text"),
                         "shareUrl": share_url,
@@ -150,7 +114,7 @@ class CompanyPostFetcher:
                         "media": post.get("image") if post.get("image") else post.get("resharedPost", {}).get("image"),
                         "original_post_text": post.get("resharedPost", {}).get("text","No original post text available"),
                         "comments": comments,
-                        "reactions": reactions[:10],
+                        "reactions": reactions,
                         "video":post.get("video") if post.get("video") else []
                     }
                    

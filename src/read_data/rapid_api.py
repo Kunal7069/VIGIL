@@ -22,6 +22,11 @@ def get_profile(username: str):
     data= services['activity_profile_service'].get_profile_by_username(username)
     return data
 
+@router.get("/company/{username}")
+def get_profile(username: str):
+    data= services['activity_profile_service'].get_company_by_username(username)
+    return data
+
 @router.get("/education/{username}")
 def get_education(username: str):
     data= services['activity_profile_service'].get_educations_by_username(username)
