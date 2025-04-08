@@ -7,7 +7,7 @@ class ActivityPostService:
     def __init__(self, db: Session):
         self.db = db
 
-    def save_post_with_details(self, post_data: dict, username:str):
+    def save_post_with_details(self, post_data: dict, username:str,media_flag:str):
         """
         Save a single post with its comments, media, and reactions.
         Ensures all linked to the same post_id and username.
@@ -54,14 +54,15 @@ class ActivityPostService:
             for media in post_data.get("media", []) or []:
                 image_url = media.get("url")
                 binary_data = None
-
-                if image_url:
-                    try:
-                        response = requests.get(image_url)
-                        if response.status_code == 200:
-                            binary_data = response.content  # Convert to binary
-                    except requests.RequestException:
-                        pass  # Handle error gracefully
+                
+                if media_flag=="yes":
+                    if image_url:
+                        try:
+                            response = requests.get(image_url)
+                            if response.status_code == 200:
+                                binary_data = response.content  # Convert to binary
+                        except requests.RequestException:
+                            pass  # Handle error gracefully
 
                 self.db.add(LinkedInPostMedia(
                     post_id=post.id,

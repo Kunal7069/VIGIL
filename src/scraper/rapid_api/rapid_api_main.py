@@ -24,7 +24,9 @@ async def get_linkedin_data(req: ActivityRequest):
     response_data = {}
     try:
         print(req)
-        job_id = services['activity_job_track'].create_job_entry(req.model_dump())
+        data = req.model_dump()
+        data.pop("media_flag", None)
+        job_id = services['activity_job_track'].create_job_entry(data)
         print(job_id)
 
         if req.profile_info == "yes" and req.type=="person":
@@ -46,7 +48,8 @@ async def get_linkedin_data(req: ActivityRequest):
                 req.post_comments,
                 req.post_limit,
                 req.comment_limit,
-                req.reaction_limit
+                req.reaction_limit,
+                req.media_flag
             )
             
         if req.post_scrap == "yes" and req.type=="company":
@@ -57,7 +60,8 @@ async def get_linkedin_data(req: ActivityRequest):
                 req.post_comments,
                 req.post_limit,
                 req.comment_limit,
-                req.reaction_limit
+                req.reaction_limit,
+                req.media_flag
                 
             )
 

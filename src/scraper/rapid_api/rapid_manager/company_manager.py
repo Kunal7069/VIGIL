@@ -43,7 +43,7 @@ class CompanyPostFetcher:
         except json.JSONDecodeError:
             return "none"
     
-    def get_company_posts(self, username, post_reactions="no", post_comments="no", post_limit=0,comment_limit=0,reaction_limit=0):
+    def get_company_posts(self, username, post_reactions="no", post_comments="no", post_limit=0,comment_limit=0,reaction_limit=0,media_flag="no"):
         """Fetches posts for a given LinkedIn username with optional reactions/comments and slicing."""
 
         if not username:
@@ -118,7 +118,7 @@ class CompanyPostFetcher:
                         "video":post.get("video") if post.get("video") else []
                     }
                    
-                    services['activity_posts_service'].save_post_with_details(temporary_data,username)
+                    services['activity_posts_service'].save_post_with_details(temporary_data,username,media_flag)
                     filtered_data.append(temporary_data)
 
             return filtered_data

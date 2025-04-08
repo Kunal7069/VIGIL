@@ -4,6 +4,9 @@ from scraper.rapid_api.rapid_api_main import router as rapid_api
 from read_data.rapid_api import router as read_rapid_api
 from scraper.apify.apify_main import router as apify_api
 app = FastAPI()
+@app.get("/")
+async def root():
+    return {"message": "Server is started"}
 
 # Include routers
 app.include_router(rapid_api, prefix="/rapid", tags=["Activity"])

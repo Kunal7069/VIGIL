@@ -12,6 +12,7 @@ class ActivityRequest(BaseModel):
     post_limit: int | None = None
     comment_limit: int | None = None
     reaction_limit: int | None = None
+    media_flag : str = Field(..., pattern="^(yes|no)$")
     
     
 
