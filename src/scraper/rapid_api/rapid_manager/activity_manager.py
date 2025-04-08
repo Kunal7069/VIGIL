@@ -172,15 +172,16 @@ class LinkedInActivityFetcher:
             if (len(likes_data) > 0
             ):
                 processed_reacions = []
-               
+                print("1")
                 for like in likes_data:
                     author = like.get("author", {})
-                    
-                    urn = like.get("urn")
+                    print("2")
+                    # urn = like.get("urn")
                     post_url = like.get("postUrl")
-            
+                    urn = linkedin_post_fetcher.extract_urn(post_url)
+                    print("3")
                     commentors = linkedin_post_fetcher.get_comments(urn,comment_limit) if post_comments == "yes" and urn else []
-                    
+                    print("4",len(commentors))
                     reactors = linkedin_post_fetcher.get_reactions(post_url,reaction_limit) if post_reactions == "yes" and post_url else [] 
                     
                     processed_reacions.append({
