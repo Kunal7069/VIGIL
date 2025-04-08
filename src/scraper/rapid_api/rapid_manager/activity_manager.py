@@ -298,6 +298,6 @@ class LinkedInActivityFetcher:
         except Exception as e:
             services['activity_job_track'].update_status(job_id, "cancelled")
             services['activity_job_track'].add_remark(job_id, f"Company profile scraping failed: {str(e)}")
-            return {"error": f"Company profile scraping failed for {username}"}
+            return {"error": f"Company profile scraping failed for {username} due to {e}"}
 
         
