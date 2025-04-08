@@ -98,7 +98,7 @@ class LinkedInActivityFetcher:
     
 
     
-    def extract_comment_details(self, username,post_limit,comment_limit,reaction_limit,job_id):
+    def extract_comment_details(self, username,post_reactions,post_comments,post_limit,comment_limit,reaction_limit,job_id):
         try:
             """
             Extract key details from comments, inject username,
@@ -122,8 +122,8 @@ class LinkedInActivityFetcher:
                     if share_url == "none" and post_url:
                         share_url = company_post_fetcher.fetch_share_url(post_url)
                     
-                    commentors = linkedin_post_fetcher.get_comments(urn,comment_limit) 
-                    reactors = linkedin_post_fetcher.get_reactions(share_url,reaction_limit) 
+                    commentors = linkedin_post_fetcher.get_comments(urn,comment_limit) if post_comments == "yes" and urn else []
+                    reactors = linkedin_post_fetcher.get_reactions(share_url,reaction_limit) if post_reactions == "yes" and post_url else [] 
                     
                     processed_comments.append({
                         "username": username,
@@ -160,7 +160,7 @@ class LinkedInActivityFetcher:
             return {"error": f"Scraping activity comments failed for {username}"}
 
     
-    def extract_likes_details(self, username,post_limit,comment_limit,reaction_limit,job_id):
+    def extract_likes_details(self, username,post_reactions,post_comments,post_limit,comment_limit,reaction_limit,job_id):
         try:
            
             """
@@ -179,9 +179,9 @@ class LinkedInActivityFetcher:
                     urn = like.get("urn")
                     post_url = like.get("postUrl")
             
-                    commentors = linkedin_post_fetcher.get_comments(urn,comment_limit) 
+                    commentors = linkedin_post_fetcher.get_comments(urn,comment_limit) if post_comments == "yes" and urn else []
                     
-                    reactors = linkedin_post_fetcher.get_reactions(post_url,reaction_limit) 
+                    reactors = linkedin_post_fetcher.get_reactions(post_url,reaction_limit) if post_reactions == "yes" and post_url else [] 
                     
                     processed_reacions.append({
                         "username": username,  # tracked profile

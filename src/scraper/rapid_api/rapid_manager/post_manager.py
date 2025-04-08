@@ -18,7 +18,7 @@ class LinkedinPostFetcher:
         """Fetches comments for a given LinkedIn post URN."""
         if not urn:
             return []
-
+        print(urn)
         conn = http.client.HTTPSConnection(self.rapidapi_host)
         headers = {
             'x-rapidapi-key': self.rapidapi_key,
@@ -33,11 +33,12 @@ class LinkedinPostFetcher:
 
         try:
             json_data = json.loads(data.decode("utf-8"))
+            print("json_data",json_data)
             comments_list = json_data.get('data', {}).get('comments', [])
-
+            
             if not isinstance(comments_list, list):
                 return []
-
+            print("comments_list",len(comments_list))
             formatted_comments = [
                 {
                     "name": f"{comment.get('author', {}).get('firstName', '')} {comment.get('author', {}).get('lastName', '')}".strip(),
@@ -78,6 +79,7 @@ class LinkedinPostFetcher:
 
             try:
                 json_data = json.loads(data.decode("utf-8"))
+                print(json_data)
                 reactions_list = json_data.get("data", {}).get('items', [])
 
                 if not reactions_list:
@@ -157,6 +159,7 @@ class LinkedinPostFetcher:
             
 
             filtered_data = []
+            print("NUMBER OF POSTS", len(posts))
             for post in posts:
                 if isinstance(post, dict):
                     post_url = post.get("postUrl")
@@ -165,8 +168,9 @@ class LinkedinPostFetcher:
                     urn = self.extract_urn(post_url)
                     
                     comments = self.get_comments(urn,comment_limit) if post_comments == "yes" and urn else []
+                    print("NUMBER OF COMMENTS", len(comments))
                     reactions = self.get_reactions(share_url,reaction_limit) if post_reactions == "yes" and post_url else []
-    
+                    print("NUMBER OF REACTIONS", len(reactions))
                     temporary_data={
                         "text": post.get("text"),
                         "shareUrl": share_url,
