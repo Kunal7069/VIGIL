@@ -160,31 +160,71 @@ class LinkedinPostFetcher:
 
             filtered_data = []
             print("NUMBER OF POSTS", len(posts))
+            # for post in posts:
+            #     if isinstance(post, dict):
+            #         post_url = post.get("postUrl")
+            #         share_url = post.get("shareUrl")
+
+            #         urn = self.extract_urn(post_url)
+                    
+            #         comments = self.get_comments(urn,comment_limit) if post_comments == "yes" and urn else []
+            #         print("NUMBER OF COMMENTS", len(comments))
+            #         reactions = self.get_reactions(share_url,reaction_limit) if post_reactions == "yes" and post_url else []
+            #         print("NUMBER OF REACTIONS", len(reactions))
+            #         temporary_data={
+            #             "text": post.get("text"),
+            #             "shareUrl": share_url,
+            #             "postUrl": post_url,
+            #             "totalreactions":post.get("totalReactionCount"),
+            #             "totalcomments":post.get("commentsCount"),
+            #             "media": post.get("image") if post.get("image") else post.get("resharedPost", {}).get("image"),
+            #             "original_post_text": post.get("resharedPost", {}).get("text","No original post text available"),
+            #             "comments": comments[:comment_limit],
+            #             "reactions": reactions[:reaction_limit],
+            #             "video":post.get("video") if post.get("video") else []
+            #         }
+            #         services['activity_posts_service'].save_post_with_details(temporary_data,username,media_flag)
+            #         filtered_data.append(temporary_data)
             for post in posts:
                 if isinstance(post, dict):
                     post_url = post.get("postUrl")
                     share_url = post.get("shareUrl")
 
                     urn = self.extract_urn(post_url)
-                    
-                    comments = self.get_comments(urn,comment_limit) if post_comments == "yes" and urn else []
-                    print("NUMBER OF COMMENTS", len(comments))
-                    reactions = self.get_reactions(share_url,reaction_limit) if post_reactions == "yes" and post_url else []
-                    print("NUMBER OF REACTIONS", len(reactions))
-                    temporary_data={
+
+                    # STEP 1: Save post only
+                    temporary_data = {
                         "text": post.get("text"),
                         "shareUrl": share_url,
                         "postUrl": post_url,
-                        "totalreactions":post.get("totalReactionCount"),
-                        "totalcomments":post.get("commentsCount"),
-                        "media": post.get("image") if post.get("image") else post.get("resharedPost", {}).get("image"),
-                        "original_post_text": post.get("resharedPost", {}).get("text","No original post text available"),
-                        "comments": comments[:comment_limit],
-                        "reactions": reactions[:reaction_limit],
-                        "video":post.get("video") if post.get("video") else []
+                        "totalreactions": post.get("totalReactionCount"),
+                        "totalcomments": post.get("commentsCount"),
+                        "media": post.get("image") or post.get("resharedPost", {}).get("image"),
+                        "original_post_text": post.get("resharedPost", {}).get("text", "No original post text available"),
+                        "video": post.get("video") or []
                     }
-                    services['activity_posts_service'].save_post_with_details(temporary_data,username,media_flag)
-                    filtered_data.append(temporary_data)
+
+                    saved_post = services['activity_posts_service'].save_post(temporary_data, username)
+
+                    if saved_post is None:
+                        print(f"Post already exists for URL: {post_url}")
+                        continue
+
+                    # STEP 2: Save media and videos
+                    services['activity_posts_service'].save_media(saved_post.id, temporary_data.get("media", []), media_flag)
+                    services['activity_posts_service'].save_videos(saved_post.id, temporary_data.get("video", []))
+
+                    # STEP 3: Fetch and save comments
+                    comments = self.get_comments(urn, comment_limit) if post_comments == "yes" and urn else []
+                    print("NUMBER OF COMMENTS", len(comments))
+                    services['activity_posts_service'].save_comments(saved_post.id, comments[:comment_limit])
+
+                    # STEP 4: Fetch and save reactions
+                    reactions = self.get_reactions(share_url, reaction_limit) if post_reactions == "yes" and post_url else []
+                    print("NUMBER OF REACTIONS", len(reactions))
+                    services['activity_posts_service'].save_reactions(saved_post.id, reactions[:reaction_limit])
+
+                    filtered_data.append({**temporary_data, "comments": comments, "reactions": reactions})
 
             return filtered_data
 

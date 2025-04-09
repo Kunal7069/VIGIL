@@ -6,7 +6,82 @@ import requests
 class ActivityPostService:
     def __init__(self, db: Session):
         self.db = db
+    
+    
+    def save_post(self, post_data: dict, username: str):
+        # Check if already exists
+        existing = (
+            self.db.query(LinkedInPost)
+            .filter(LinkedInPost.post_url == post_data["postUrl"])
+            .first()
+        )
+        if existing:
+            return None  # Skip if exists
+        post = LinkedInPost(
+            username=username,
+            post_url=post_data.get("postUrl"),
+            share_url=post_data.get("shareUrl", "none"),
+            original_post_text=post_data.get("original_post_text", "none"),
+            text=post_data.get("text", ""),
+            total_reactions=post_data.get("totalreactions", 0),
+            total_comments=post_data.get("totalcomments", 0)
+        )
+        self.db.add(post)
+        self.db.commit()
+        self.db.refresh(post)
+        return post
 
+    def save_comments(self, post_id: int, comments: list):
+        for comment in comments:
+            self.db.add(LinkedInPostComment(
+                post_id=post_id,
+                name=comment.get("name", ""),
+                linkedin_url=comment.get("linkedinUrl", ""),
+                title=comment.get("title", ""),
+                text=comment.get("text", "")
+            ))
+
+    def save_media(self, post_id: int, media_list: list, media_flag: str):
+        for media in media_list or []:
+            image_url = media.get("url")
+            binary_data = None
+
+            if media_flag == "yes" and image_url:
+                try:
+                    response = requests.get(image_url)
+                    if response.status_code == 200:
+                        binary_data = response.content
+                except requests.RequestException:
+                    pass  # Handle gracefully
+
+            self.db.add(LinkedInPostMedia(
+                post_id=post_id,
+                url=image_url,
+                media_data=binary_data,
+                width=media.get("width"),
+                height=media.get("height")
+            ))
+
+    def save_videos(self, post_id: int, videos: list):
+        for video in videos or []:
+            self.db.add(LinkedInPostVideo(
+                post_id=post_id,
+                url=video.get("url"),
+                poster=video.get("poster"),
+                duration=video.get("duration")
+            ))
+
+    def save_reactions(self, post_id: int, reactions: list):
+        for reaction in reactions:
+            self.db.add(LinkedInPostReaction(
+                post_id=post_id,
+                full_name=reaction.get("fullName", ""),
+                profile_url=reaction.get("profileUrl", ""),
+                headline=reaction.get("headline", ""),
+                reaction_type=reaction.get("reactionType", "")
+            ))
+    
+    
     def save_post_with_details(self, post_data: dict, username:str,media_flag:str):
         """
         Save a single post with its comments, media, and reactions.
@@ -33,6 +108,7 @@ class ActivityPostService:
             )
             self.db.add(post)
             self.db.flush()  # Get post.id before commit
+            
             # Save comments
             for comment in post_data.get("comments", []):
                 self.db.add(LinkedInPostComment(
@@ -42,15 +118,8 @@ class ActivityPostService:
                     title=comment.get("title", ""),
                     text=comment.get("text", "")
                 ))
+                
             # Save media
-            # for media in post_data.get("media", [])or []:
-            #     self.db.add(LinkedInPostMedia(
-            #         post_id=post.id,
-            #         url=media.get("url"),
-            #         width=media.get("width"),
-            #         height=media.get("height")
-            #     ))
-            
             for media in post_data.get("media", []) or []:
                 image_url = media.get("url")
                 binary_data = None
