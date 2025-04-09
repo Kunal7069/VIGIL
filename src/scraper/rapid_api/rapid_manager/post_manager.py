@@ -160,31 +160,7 @@ class LinkedinPostFetcher:
 
             filtered_data = []
             print("NUMBER OF POSTS", len(posts))
-            # for post in posts:
-            #     if isinstance(post, dict):
-            #         post_url = post.get("postUrl")
-            #         share_url = post.get("shareUrl")
-
-            #         urn = self.extract_urn(post_url)
-                    
-            #         comments = self.get_comments(urn,comment_limit) if post_comments == "yes" and urn else []
-            #         print("NUMBER OF COMMENTS", len(comments))
-            #         reactions = self.get_reactions(share_url,reaction_limit) if post_reactions == "yes" and post_url else []
-            #         print("NUMBER OF REACTIONS", len(reactions))
-            #         temporary_data={
-            #             "text": post.get("text"),
-            #             "shareUrl": share_url,
-            #             "postUrl": post_url,
-            #             "totalreactions":post.get("totalReactionCount"),
-            #             "totalcomments":post.get("commentsCount"),
-            #             "media": post.get("image") if post.get("image") else post.get("resharedPost", {}).get("image"),
-            #             "original_post_text": post.get("resharedPost", {}).get("text","No original post text available"),
-            #             "comments": comments[:comment_limit],
-            #             "reactions": reactions[:reaction_limit],
-            #             "video":post.get("video") if post.get("video") else []
-            #         }
-            #         services['activity_posts_service'].save_post_with_details(temporary_data,username,media_flag)
-            #         filtered_data.append(temporary_data)
+           
             for post in posts:
                 if isinstance(post, dict):
                     post_url = post.get("postUrl")

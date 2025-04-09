@@ -96,36 +96,26 @@ class LinkedInActivityFetcher:
         return self._make_request(endpoint)
 
     
-
-    
-    def extract_comment_details(self, username,post_reactions,post_comments,post_limit,comment_limit,reaction_limit,job_id):
+    def extract_comment_details(self, username, post_reactions, post_comments, post_limit, comment_limit, reaction_limit, job_id,media_flag):
         try:
-            """
-            Extract key details from comments, inject username,
-            transform to DB model format, and save to DB.
-            """
             comments = self.get_comments(username)
-            
+
             if "data" in comments and isinstance(comments["data"], list) and len(comments["data"]) > 0:
+                service = services['activity_comments_service']
                 processed_comments = []
 
                 for comment in comments["data"][:post_limit]:
-                    
                     author = comment.get("author", {})
-                    
                     post_url = comment.get("postUrl")
-                
+
                     urn = linkedin_post_fetcher.extract_urn(post_url)
-                    
                     share_url = comment.get("shareUrl", "none")
-                   
+
                     if share_url == "none" and post_url:
                         share_url = company_post_fetcher.fetch_share_url(post_url)
-                    
-                    commentors = linkedin_post_fetcher.get_comments(urn,comment_limit) if post_comments == "yes" and urn else []
-                    reactors = linkedin_post_fetcher.get_reactions(share_url,reaction_limit) if post_reactions == "yes" and post_url else [] 
-                    
-                    processed_comments.append({
+
+                    # Construct comment data dict
+                    comment_data = {
                         "username": username,
                         "first_name": author.get("firstName", ""),
                         "last_name": author.get("lastName", ""),
@@ -133,7 +123,7 @@ class LinkedInActivityFetcher:
                         "profile_url": author.get("url", ""),
                         "post_text": comment.get("text", ""),
                         "highlighted_comment": comment.get("highlightedComments", [""])[0],
-                        "post_url": comment.get("postUrl", ""),
+                        "post_url": post_url,
                         "total_reactions": comment.get("totalReactionCount", 0),
                         "like_count": comment.get("likeCount", 0),
                         "appreciation_count": comment.get("appreciationCount", 0),
@@ -142,24 +132,41 @@ class LinkedInActivityFetcher:
                         "funny_count": comment.get("funnyCount", 0),
                         "comments_count": comment.get("commentsCount", 0),
                         "reposts_count": comment.get("repostsCount", 0),
-                        "commentors":commentors,
-                        "reactors":reactors
-                    })
-                
-                # Save using the service
-                
-                services['activity_comments_service'].save_batch_activity_comments(processed_comments[:post_limit])
+                    }
 
-                return processed_comments[:post_limit]
+                    # Save main comment (returns comment obj or None if exists)
+                    comment_obj = service.save_main_comment(comment_data)
+
+                    if not comment_obj:
+                        continue  # Skip duplicates
+
+                    # Fetch related data only if new comment was added
+                    commentors = linkedin_post_fetcher.get_comments(urn, comment_limit) if post_comments == "yes" and urn else []
+                    service.save_commentors(comment_obj.id, commentors)
+                    
+                    reactors = linkedin_post_fetcher.get_reactions(share_url, reaction_limit) if post_reactions == "yes" and post_url else []
+                    service.save_reactors(comment_obj.id, reactors)
+                    
+                    media = comment.get("image", []) or []
+                    service.save_media(comment_obj.id, media,media_flag)
+                    
+                    video = comment.get("video", []) or []
+                    service.save_video(comment_obj.id, video)
+
             
+                    # Track processed
+                    processed_comments.append(comment_data)
+
+                return processed_comments
+
             else:
                 return {"error": "No comments found"}
+
         except Exception as e:
             services['activity_job_track'].update_status(job_id, "cancelled")
             services['activity_job_track'].add_remark(job_id, f"Scraping activity comments failed: {str(e)}")
             return {"error": f"Scraping activity comments failed for {username}"}
-
-    
+        
     def extract_likes_details(self, username,post_reactions,post_comments,post_limit,comment_limit,reaction_limit,job_id):
         try:
            

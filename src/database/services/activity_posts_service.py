@@ -8,6 +8,10 @@ class ActivityPostService:
         self.db = db
     
     
+    
+    
+    
+    
     def save_post(self, post_data: dict, username: str):
         # Check if already exists
         existing = (
@@ -178,6 +182,7 @@ class ActivityPostService:
             )
 
             result = []
+            print("1",posts)
             for post in posts:
                 result.append({
                     "post_id": post.id,

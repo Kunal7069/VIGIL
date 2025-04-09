@@ -36,7 +36,7 @@ async def get_linkedin_data(req: ActivityRequest):
             response_data["profile"] = linkedin.extract_clean_company_profile(req.username, job_id)
 
         if req.activity_comments == "yes":
-            response_data["comments"] = linkedin.extract_comment_details(req.username,req.post_reactions,req.post_comments,req.post_limit,req.comment_limit,req.reaction_limit,job_id)
+            response_data["comments"] = linkedin.extract_comment_details(req.username,req.post_reactions,req.post_comments,req.post_limit,req.comment_limit,req.reaction_limit,job_id,req.media_flag)
 
         if req.activity_reactions == "yes":
             response_data["reactions"] = linkedin.extract_likes_details(req.username,req.post_reactions,req.post_comments,req.post_limit,req.comment_limit,req.reaction_limit ,job_id)

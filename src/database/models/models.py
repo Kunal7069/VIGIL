@@ -40,6 +40,8 @@ class ActivityComments(Base):
     # Relationships
     commentors = relationship("ActivityCommentsCommentor", back_populates="activity_comment", cascade="all, delete-orphan")
     reactors = relationship("ActivityCommentsReactor", back_populates="activity_comment", cascade="all, delete-orphan")
+    media = relationship("ActivityCommentsMedia", back_populates="activity_comment", cascade="all, delete-orphan")
+    videos = relationship("ActivityCommentsVideo", back_populates="activity_comment", cascade="all, delete-orphan")
 
 
 class ActivityCommentsCommentor(Base):
@@ -66,6 +68,30 @@ class ActivityCommentsReactor(Base):
     profile_url = Column(String(500))
 
     activity_comment = relationship("ActivityComments", back_populates="reactors")
+
+class ActivityCommentsMedia(Base):
+    __tablename__ = "activity_comments_media"
+
+    id = Column(Integer, primary_key=True, index=True)
+    activity_comment_id = Column(Integer, ForeignKey("activity_comments.id"), nullable=False)
+    url = Column(String(500), nullable=False)
+    media_data = Column(LargeBinary, nullable=True) 
+    width = Column(Integer)
+    height = Column(Integer)
+
+    activity_comment = relationship("ActivityComments", back_populates="media")
+
+
+class ActivityCommentsVideo(Base):
+    __tablename__ = "activity_comments_videos"
+
+    id = Column(Integer, primary_key=True, index=True)
+    activity_comment_id = Column(Integer, ForeignKey("activity_comments.id"), nullable=False)
+    url = Column(String(500), nullable=False)
+    poster = Column(String(500), nullable=False)
+    duration = Column(Integer)
+
+    activity_comment = relationship("ActivityComments", back_populates="videos")
     
 
 class ActivityReactions(Base):
