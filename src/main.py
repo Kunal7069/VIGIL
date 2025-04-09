@@ -1,9 +1,20 @@
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
 from scraper.rapid_api.rapid_api_main import router as rapid_api
 from read_data.rapid_api import router as read_rapid_api
 from scraper.apify.apify_main import router as apify_api
 app = FastAPI()
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Replace "*" with specific origins in production
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+
 @app.get("/")
 async def root():
     return {"message": "Server is started"}
