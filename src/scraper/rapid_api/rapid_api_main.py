@@ -75,7 +75,8 @@ async def get_linkedin_data(req: ActivityRequest):
                 req.post_limit,
                 req.comment_limit,
                 req.reaction_limit,
-                req.media_flag
+                req.media_flag,
+                job_id
             )
             
         if req.post_scrap == "yes" and req.type=="company":
@@ -87,7 +88,8 @@ async def get_linkedin_data(req: ActivityRequest):
                 req.post_limit,
                 req.comment_limit,
                 req.reaction_limit,
-                req.media_flag
+                req.media_flag,
+                job_id
                 
             )
 

@@ -134,6 +134,7 @@ class LinkedInActivityFetcher:
                         "funny_count": comment.get("funnyCount", 0),
                         "comments_count": comment.get("commentsCount", 0),
                         "reposts_count": comment.get("repostsCount", 0),
+                        "job_id":job_id
                     }
 
                     # Save main comment (returns comment obj or None if exists)
@@ -295,7 +296,7 @@ class LinkedInActivityFetcher:
                     "end": pos.get("end", {})
                 })
             
-            services['activity_profile_service'].save_profile_bundle(result)
+            services['activity_profile_service'].save_profile_bundle(result,job_id)
             return result
         except Exception as e:
             services['activity_job_track'].update_status(job_id, "cancelled")
@@ -313,7 +314,7 @@ class LinkedInActivityFetcher:
             company_data = company_profile_data['data']
             company_data["username"] = username
             print(company_data)
-            services['activity_profile_service'].create_company_profile(company_data)
+            services['activity_profile_service'].create_company_profile(company_data,job_id)
             return company_profile_data
         except Exception as e:
             services['activity_job_track'].update_status(job_id, "cancelled")

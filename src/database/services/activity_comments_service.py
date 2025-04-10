@@ -255,4 +255,81 @@ class ActivityCommentsService:
         except SQLAlchemyError as e:
             print(f"Database error: {e}")
             return []
+        
+    def get_activity_comments_by_username_and_job(self, username: str,job_id:int):
+        """
+        Fetch all activity comments for a given LinkedIn username,
+        including related commentors, reactors, media, and videos.
+        """
+        try:
+            comments = (
+                self.db.query(ActivityComments)
+                .filter(ActivityComments.username == username,ActivityComments.job_id == job_id)
+                .options(
+                    joinedload(ActivityComments.commentors),
+                    joinedload(ActivityComments.reactors),
+                    joinedload(ActivityComments.media),
+                    joinedload(ActivityComments.videos)
+                )
+                .order_by(ActivityComments.created_at.desc())
+                .all()
+            )
+
+            result = []
+            for comment in comments:
+                result.append({
+                    "id": comment.id,
+                    "username": comment.username,
+                    "first_name": comment.first_name,
+                    "last_name": comment.last_name,
+                    "headline": comment.headline,
+                    "profile_url": comment.profile_url,
+                    "post_text": comment.post_text,
+                    "highlighted_comment": comment.highlighted_comment,
+                    "post_url": comment.post_url,
+                    "total_reactions": comment.total_reactions,
+                    "like_count": comment.like_count,
+                    "appreciation_count": comment.appreciation_count,
+                    "empathy_count": comment.empathy_count,
+                    "praise_count": comment.praise_count,
+                    "funny_count": comment.funny_count,
+                    "comments_count": comment.comments_count,
+                    "reposts_count": comment.reposts_count,
+                    "created_at": comment.created_at,
+                    "commentors": [
+                        {
+                            "name": c.name,
+                            "linkedin_url": c.linkedin_url,
+                            "title": c.title,
+                            "text": c.text
+                        } for c in comment.commentors
+                    ],
+                    "reactors": [
+                        {
+                            "full_name": r.full_name,
+                            "profile_url": r.profile_url,
+                            "headline": r.headline,
+                            "reaction_type": r.reaction_type
+                        } for r in comment.reactors
+                    ],
+                    "media": [
+                        {
+                            "url": m.url,
+                            "width": m.width,
+                            "height": m.height
+                        } for m in comment.media
+                    ],
+                    "videos": [
+                        {
+                            "url": v.url,
+                            "poster": v.poster,
+                            "duration": v.duration
+                        } for v in comment.videos
+                    ]
+                })
+
+            return result
+        except SQLAlchemyError as e:
+            print(f"Database error: {e}")
+            return []
 

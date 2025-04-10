@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Depends, HTTPException,APIRouter
+from fastapi import FastAPI, Depends, HTTPException,APIRouter, Header
 from sqlalchemy.orm import Session
 from typing import List
 from database.main import services
@@ -16,10 +16,22 @@ from math import ceil
 load_dotenv()
 
 RAPID_API_KEY = os.getenv("RAPID_API_KEY")
+ACCESS_TOKEN = os.getenv("ACCESS_TOKEN")
 
 app = FastAPI()
 
 router = APIRouter()
+
+async def verify_token(authorization: str = Header(None)):
+    if not authorization:
+        raise HTTPException(status_code=401, detail="Authorization header missing")
+
+    try:
+        scheme, token = authorization.split()
+        if scheme.lower() != "bearer" or token != ACCESS_TOKEN:
+            raise HTTPException(status_code=401, detail="Invalid or missing token")
+    except ValueError:
+        raise HTTPException(status_code=401, detail="Invalid Authorization header format")
 
 @router.get("/activity-comments/{username}")
 def get_activity_comments(username: str):
@@ -31,9 +43,10 @@ def get_activity_reactions(username: str):
     data= services['activity_reactions_service'].get_activity_reactions_by_username(username)
     return data
 
+
 @router.get("/profile/{username}")
 def get_profile(username: str):
-    data= services['activity_profile_service'].get_profile_by_username(username)
+    data= services['activity_profile_service'].get_complete_profile_by_username(username)
     return data
 
 @router.get("/company/{username}")
@@ -41,25 +54,27 @@ def get_profile(username: str):
     data= services['activity_profile_service'].get_company_by_username(username)
     return data
 
-@router.get("/education/{username}")
-def get_education(username: str):
-    data= services['activity_profile_service'].get_educations_by_username(username)
-    return data
-
-@router.get("/positions/{username}")
-def get_positions(username: str):
-    data= services['activity_profile_service'].get_positions_by_username(username)
-    return data
-
-@router.get("/full-time-positions/{username}")
-def get_full_time_positions(username: str):
-    data= services['activity_profile_service'].get_full_positions_by_username(username)
-    return data
 
 @router.get("/posts/{username}")
 def get_posts(username: str):
     data= services['activity_posts_service'].get_posts_by_username(username)
     return data
+
+@router.get("/get_job_data/{id}", dependencies=[Depends(verify_token)])
+def get_job_data(id: int):
+    data= services['activity_job_track'].get_job_by_id(id)
+    print(data.profile_info,data.type,data.post_scrap,data.username,data.activity_comments)
+    final_data={}
+    if data.type=="company" and data.profile_info=="yes":
+        final_data['profile_data']=services['activity_profile_service'].get_company_by_username_and_job(data.username,data.id)
+    if data.type=="person" and data.profile_info=="yes":
+        final_data['profile_data']=services['activity_profile_service'].get_complete_profile_by_username(data.username,data.id)
+    if data.post_scrap=="yes":
+        final_data['posts_data']=services['activity_posts_service'].get_posts_by_username_and_job(data.username,data.id)
+    if data.activity_comments=="yes":
+        final_data['activity_comments']=services['activity_comments_service'].get_activity_comments_by_username_and_job(data.username,data.id)
+    return final_data
+
 
 @router.get("/job-tracker")
 def job_tracker():

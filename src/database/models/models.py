@@ -5,43 +5,43 @@ from sqlalchemy.orm import relationship
 import enum
 
 
-class ActivityComments(Base):
-    __tablename__ = "activity_comments"  # Renamed to use underscores
+# class ActivityComments(Base):
+#     __tablename__ = "activity_comments"  # Renamed to use underscores
 
-    id = Column(Integer, primary_key=True, index=True)
-    username = Column(String(100), nullable=False, index=True)
+#     id = Column(Integer, primary_key=True, index=True)
+#     username = Column(String(100), nullable=False, index=True)
     
-    # Author info
-    first_name = Column(String(100), nullable=False)
-    last_name = Column(String(100), nullable=False)
-    headline = Column(String(300), nullable=True)
-    profile_url = Column(String(300), nullable=False)
+#     # Author info
+#     first_name = Column(String(100), nullable=False)
+#     last_name = Column(String(100), nullable=False)
+#     headline = Column(String(300), nullable=True)
+#     profile_url = Column(String(300), nullable=False)
 
-    # Post info
-    post_text = Column(Text, nullable=False)
-    highlighted_comment = Column(Text, nullable=True)
-    post_url = Column(String(300), nullable=False, unique=True)
+#     # Post info
+#     post_text = Column(Text, nullable=False)
+#     highlighted_comment = Column(Text, nullable=True)
+#     post_url = Column(String(300), nullable=False, unique=True)
 
-    # Reaction counts
-    total_reactions = Column(Integer, default=0)
-    like_count = Column(Integer, default=0)
-    appreciation_count = Column(Integer, default=0)
-    empathy_count = Column(Integer, default=0)
-    praise_count = Column(Integer, default=0)
-    funny_count = Column(Integer, default=0)
+#     # Reaction counts
+#     total_reactions = Column(Integer, default=0)
+#     like_count = Column(Integer, default=0)
+#     appreciation_count = Column(Integer, default=0)
+#     empathy_count = Column(Integer, default=0)
+#     praise_count = Column(Integer, default=0)
+#     funny_count = Column(Integer, default=0)
 
-    # Engagement counts
-    comments_count = Column(Integer, default=0)
-    reposts_count = Column(Integer, default=0)
+#     # Engagement counts
+#     comments_count = Column(Integer, default=0)
+#     reposts_count = Column(Integer, default=0)
 
-    # Timestamps
-    created_at = Column(TIMESTAMP, server_default=func.now())
+#     # Timestamps
+#     created_at = Column(TIMESTAMP, server_default=func.now())
 
-    # Relationships
-    commentors = relationship("ActivityCommentsCommentor", back_populates="activity_comment", cascade="all, delete-orphan")
-    reactors = relationship("ActivityCommentsReactor", back_populates="activity_comment", cascade="all, delete-orphan")
-    media = relationship("ActivityCommentsMedia", back_populates="activity_comment", cascade="all, delete-orphan")
-    videos = relationship("ActivityCommentsVideo", back_populates="activity_comment", cascade="all, delete-orphan")
+#     # Relationships
+#     commentors = relationship("ActivityCommentsCommentor", back_populates="activity_comment", cascade="all, delete-orphan")
+#     reactors = relationship("ActivityCommentsReactor", back_populates="activity_comment", cascade="all, delete-orphan")
+#     media = relationship("ActivityCommentsMedia", back_populates="activity_comment", cascade="all, delete-orphan")
+#     videos = relationship("ActivityCommentsVideo", back_populates="activity_comment", cascade="all, delete-orphan")
 
 
 class ActivityCommentsCommentor(Base):
@@ -152,59 +152,7 @@ class ActivityReactionsReactor(Base):
 
     activity_reaction = relationship("ActivityReactions", back_populates="reactors")
     
-class CompanyProfile(Base):
-    __tablename__ = "Company Profile"
 
-    id = Column(Integer, primary_key=True, index=True)
-    username = Column(String(255), nullable=False)
-    name = Column(String(255), nullable=False)
-    universal_name = Column(String(255), unique=True, nullable=False)
-    linkedin_url = Column(Text, nullable=False)
-    tagline = Column(Text, nullable=True)
-    description = Column(Text, nullable=True)
-    phone = Column(String(20), nullable=True)
-    website = Column(Text, nullable=True)
-    crunchbase_url = Column(Text, nullable=True)
-
-    # Image URLs
-    logo = Column(Text, nullable=True)
-    cover = Column(Text, nullable=True)
-
-    # Company details
-    staff_count = Column(Integer, nullable=True)
-    staff_count_range = Column(String(50), nullable=True)
-    follower_count = Column(Integer, nullable=True)
-
-    # Industry and founding year
-    industries = Column(JSON, nullable=True)  # Storing industries as an array
-    founded_year = Column(Integer, nullable=True)
-
-    # Headquarters details
-    headquarter_country = Column(String(100), nullable=True)
-    headquarter_city = Column(String(100), nullable=True)
-    headquarter_postal_code = Column(String(20), nullable=True)
-    headquarter_address_line1 = Column(String(255), nullable=True)
-    headquarter_address_line2 = Column(String(255), nullable=True)
-
-    # Timestamp
-    created_at = Column(TIMESTAMP, server_default=func.now())
-
-class LinkedInProfile(Base):
-    __tablename__ = "Linked Profile"
-
-    id = Column(Integer, primary_key=True, index=True)
-    username = Column(String(100), unique=True, nullable=False)
-    first_name = Column(String(100), nullable=False)
-    last_name = Column(String(100), nullable=False)
-    profile_picture = Column(Text, nullable=True)
-    headline = Column(Text, nullable=True)
-
-    geo_country = Column(String(100), nullable=True)
-    geo_city = Column(String(100), nullable=True)
-    geo_full = Column(String(200), nullable=True)
-    geo_country_code = Column(String(10), nullable=True)
-
-    created_at = Column(TIMESTAMP, server_default=func.now())
     
 
 class LinkedInEducation(Base):
@@ -276,28 +224,6 @@ class LinkedInFullPosition(Base):
     end_year = Column(Integer, nullable=True)
     end_month = Column(Integer, nullable=True)
     
-    
-class LinkedInPost(Base):
-    __tablename__ = "Linkedin Posts"
-
-    id = Column(Integer, primary_key=True, index=True)
-    post_id = Column(String(100), unique=True, nullable=True, index=True)  # extracted from postUrl
-    username = Column(String(100), index=True, nullable=False)
-    text = Column(Text, nullable=True)
-    original_post_text =  Column(Text, nullable=True)
-    share_url = Column(String(500), nullable=True)
-    post_url = Column(String(500), unique=True, nullable=False)
-    total_reactions = Column(Integer, default=0)
-    total_comments = Column(Integer, default=0)
-    created_at = Column(TIMESTAMP, server_default=func.now())
-
-    # Relationships
-    media = relationship("LinkedInPostMedia", back_populates="post", cascade="all, delete")
-    video = relationship("LinkedInPostVideo", back_populates="post", cascade="all, delete")
-    comments = relationship("LinkedInPostComment", back_populates="post", cascade="all, delete")
-    reactions = relationship("LinkedInPostReaction", back_populates="post", cascade="all, delete")
-
-
 class LinkedInPostMedia(Base):
     __tablename__ = "Linkedin Post Images"
 
@@ -354,24 +280,147 @@ class JobStatusEnum(str, enum.Enum):
     completed = "completed"
 
 
+    
+class LinkedInProfile(Base):
+    __tablename__ = "Linked Profile"
+
+    id = Column(Integer, primary_key=True, index=True)
+    username = Column(String(100), unique=True, nullable=False)
+    first_name = Column(String(100), nullable=False)
+    last_name = Column(String(100), nullable=False)
+    profile_picture = Column(Text, nullable=True)
+    headline = Column(Text, nullable=True)
+
+    geo_country = Column(String(100), nullable=True)
+    geo_city = Column(String(100), nullable=True)
+    geo_full = Column(String(200), nullable=True)
+    geo_country_code = Column(String(10), nullable=True)
+
+    # Foreign key to JobTracker
+    job_id = Column(Integer, ForeignKey("job_tracker.id"), nullable=True)
+
+    # Relationship to JobTracker
+    job = relationship("JobTracker", backref="scraped_profiles")
+
+    created_at = Column(TIMESTAMP, server_default=func.now())
+
+class LinkedInPost(Base):
+    __tablename__ = "Linkedin Posts"
+
+    id = Column(Integer, primary_key=True, index=True)
+    post_id = Column(String(100), unique=True, nullable=True, index=True)  # extracted from postUrl
+    username = Column(String(100), index=True, nullable=False)
+    text = Column(Text, nullable=True)
+    original_post_text =  Column(Text, nullable=True)
+    share_url = Column(String(500), nullable=True)
+    post_url = Column(String(500), unique=True, nullable=False)
+    total_reactions = Column(Integer, default=0)
+    total_comments = Column(Integer, default=0)
+    created_at = Column(TIMESTAMP, server_default=func.now())
+    job_id = Column(Integer, ForeignKey("job_tracker.id"), nullable=True)
+    # Relationships
+    media = relationship("LinkedInPostMedia", back_populates="post", cascade="all, delete")
+    video = relationship("LinkedInPostVideo", back_populates="post", cascade="all, delete")
+    comments = relationship("LinkedInPostComment", back_populates="post", cascade="all, delete")
+    reactions = relationship("LinkedInPostReaction", back_populates="post", cascade="all, delete")
+    job = relationship("JobTracker", backref="posts")
+    
+    
+class CompanyProfile(Base):
+    __tablename__ = "Company Profile"
+
+    id = Column(Integer, primary_key=True, index=True)
+    username = Column(String(255), nullable=False)
+    name = Column(String(255), nullable=False)
+    universal_name = Column(String(255), unique=True, nullable=False)
+    linkedin_url = Column(Text, nullable=False)
+    tagline = Column(Text, nullable=True)
+    description = Column(Text, nullable=True)
+    phone = Column(String(20), nullable=True)
+    website = Column(Text, nullable=True)
+    crunchbase_url = Column(Text, nullable=True)
+
+    # Image URLs
+    logo = Column(Text, nullable=True)
+    cover = Column(Text, nullable=True)
+
+    # Company details
+    staff_count = Column(Integer, nullable=True)
+    staff_count_range = Column(String(50), nullable=True)
+    follower_count = Column(Integer, nullable=True)
+
+    # Industry and founding year
+    industries = Column(JSON, nullable=True)  # Storing industries as an array
+    founded_year = Column(Integer, nullable=True)
+
+    # Headquarters details
+    headquarter_country = Column(String(100), nullable=True)
+    headquarter_city = Column(String(100), nullable=True)
+    headquarter_postal_code = Column(String(20), nullable=True)
+    headquarter_address_line1 = Column(String(255), nullable=True)
+    headquarter_address_line2 = Column(String(255), nullable=True)
+    job_id = Column(Integer, ForeignKey("job_tracker.id", ondelete="CASCADE"), nullable=True)
+    job = relationship("JobTracker", back_populates="company_profiles")
+    # Timestamp
+    created_at = Column(TIMESTAMP, server_default=func.now())
+
+class ActivityComments(Base):
+    __tablename__ = "activity_comments"  # Renamed to use underscores
+
+    id = Column(Integer, primary_key=True, index=True)
+    username = Column(String(100), nullable=False, index=True)
+    
+    # Author info
+    first_name = Column(String(100), nullable=False)
+    last_name = Column(String(100), nullable=False)
+    headline = Column(String(300), nullable=True)
+    profile_url = Column(String(300), nullable=False)
+
+    # Post info
+    post_text = Column(Text, nullable=False)
+    highlighted_comment = Column(Text, nullable=True)
+    post_url = Column(String(300), nullable=False, unique=True)
+
+    # Reaction counts
+    total_reactions = Column(Integer, default=0)
+    like_count = Column(Integer, default=0)
+    appreciation_count = Column(Integer, default=0)
+    empathy_count = Column(Integer, default=0)
+    praise_count = Column(Integer, default=0)
+    funny_count = Column(Integer, default=0)
+
+    # Engagement counts
+    comments_count = Column(Integer, default=0)
+    reposts_count = Column(Integer, default=0)
+    job_id = Column(Integer, ForeignKey("job_tracker.id"), nullable=False)
+    # Timestamps
+    created_at = Column(TIMESTAMP, server_default=func.now())
+
+    # Relationships
+    job = relationship("JobTracker", back_populates="activity_comments_entries")
+    commentors = relationship("ActivityCommentsCommentor", back_populates="activity_comment", cascade="all, delete-orphan")
+    reactors = relationship("ActivityCommentsReactor", back_populates="activity_comment", cascade="all, delete-orphan")
+    media = relationship("ActivityCommentsMedia", back_populates="activity_comment", cascade="all, delete-orphan")
+    videos = relationship("ActivityCommentsVideo", back_populates="activity_comment", cascade="all, delete-orphan")
+
 class JobTracker(Base):
     __tablename__ = "job_tracker"
 
     id = Column(Integer, primary_key=True, index=True)
     username = Column(String(100), nullable=False, index=True)
-    type=  Column(String(100), nullable=False, index=True)
+    type = Column(String(100), nullable=False, index=True)
     activity_comments = Column(String(10), default="no")
     activity_reactions = Column(String(10), default="no")
     profile_info = Column(String(10), default="no")
     post_scrap = Column(String(10), default="no")
     post_comments = Column(String(10), default="no")
     post_reactions = Column(String(10), default="no")
-
     post_limit = Column(Integer, nullable=True)
     comment_limit = Column(Integer, nullable=True)
     reaction_limit = Column(Integer, nullable=True)
-
     status = Column(Enum(JobStatusEnum), default=JobStatusEnum.pending)
-    remark = Column(String, nullable=True) 
-
+    remark = Column(String, nullable=True)
     created_at = Column(TIMESTAMP, server_default=func.now())
+    
+    company_profiles = relationship("CompanyProfile", back_populates="job", cascade="all, delete-orphan")
+    activity_comments_entries = relationship("ActivityComments", back_populates="job", cascade="all, delete-orphan")

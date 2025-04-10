@@ -7,20 +7,18 @@ class ActivityPostService:
     def __init__(self, db: Session):
         self.db = db
     
+   
     
-    
-    
-    
-    
-    def save_post(self, post_data: dict, username: str):
-        # Check if already exists
+    def save_post(self, post_data: dict, username: str, job_id: int = None):
+        # Check if post already exists
         existing = (
             self.db.query(LinkedInPost)
             .filter(LinkedInPost.post_url == post_data["postUrl"])
             .first()
         )
         if existing:
-            return None  # Skip if exists
+            return None  # Skip if already exists
+
         post = LinkedInPost(
             username=username,
             post_url=post_data.get("postUrl"),
@@ -28,8 +26,10 @@ class ActivityPostService:
             original_post_text=post_data.get("original_post_text", "none"),
             text=post_data.get("text", ""),
             total_reactions=post_data.get("totalreactions", 0),
-            total_comments=post_data.get("totalcomments", 0)
+            total_comments=post_data.get("totalcomments", 0),
+            job_id=job_id  
         )
+
         self.db.add(post)
         self.db.commit()
         self.db.refresh(post)
@@ -178,6 +178,68 @@ class ActivityPostService:
             posts = (
                 self.db.query(LinkedInPost)
                 .filter(LinkedInPost.username == username)
+                .all()
+            )
+
+            result = []
+            print("1",posts)
+            for post in posts:
+                result.append({
+                    "post_id": post.id,
+                    "text": post.text,
+                    "original_post_text":post.original_post_text,
+                    "post_url": post.post_url,
+                    "share_url": post.share_url,
+                    "total_reactions": post.total_reactions,
+                    "total_comments": post.total_comments,
+                    "comments": [
+                        {
+                            "name": c.name,
+                            "linkedin_url": c.linkedin_url,
+                            "title": c.title,
+                            "text": c.text
+                        }
+                        for c in post.comments
+                    ],
+                    "media": [
+                        {
+                            "url": m.url,
+                            "width": m.width,
+                            "height": m.height
+                        }
+                        for m in post.media
+                    ],
+                    "video": [
+                        {
+                            "url": m.url,
+                            "poster": m.poster,
+                            "duration": m.duration
+                        }
+                        for m in post.video
+                    ],
+                    "reactions": [
+                        {
+                            "full_name": r.full_name,
+                            "profile_url": r.profile_url,
+                            "headline": r.headline,
+                            "reaction_type": r.reaction_type
+                        }
+                        for r in post.reactions
+                    ]
+                })
+
+            return result
+        except SQLAlchemyError:
+            return []
+        
+    def get_posts_by_username_and_job(self, username: str,job_id:int):
+        """
+        Fetch all posts (with nested comments, media, and reactions) for a given username.
+        """
+        try:
+            posts = (
+                self.db.query(LinkedInPost)
+                .filter(LinkedInPost.username == username,LinkedInPost.job_id == job_id)
                 .all()
             )
 

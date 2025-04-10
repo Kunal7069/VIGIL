@@ -33,14 +33,14 @@ class LinkedinPostFetcher:
 
         try:
             json_data = json.loads(data.decode("utf-8"))
-            print("json_data",json_data)
+           
             if "message" in json_data and not json_data.get("success", False):
                     return {"error":json_data["message"]}
             comments_list = json_data.get('data', {}).get('comments', [])
             
             if not isinstance(comments_list, list):
                 return []
-            print("comments_list",len(comments_list))
+            
             formatted_comments = [
                 {
                     "name": f"{comment.get('author', {}).get('firstName', '')} {comment.get('author', {}).get('lastName', '')}".strip(),
@@ -50,7 +50,7 @@ class LinkedinPostFetcher:
                 }
                 for comment in comments_list
             ]
-            print("COMMENTS",len(formatted_comments))
+            
             return formatted_comments[:comment_limit]
         except json.JSONDecodeError:
             return []
@@ -81,7 +81,6 @@ class LinkedinPostFetcher:
 
             try:
                 json_data = json.loads(data.decode("utf-8"))
-                print(json_data)
                 if "message" in json_data and not json_data.get("success", False):
                     return {"error":json_data["message"]}
                 reactions_list = json_data.get("data", {}).get('items', [])
@@ -109,12 +108,12 @@ class LinkedinPostFetcher:
 
             except json.JSONDecodeError:
                 break  # Exit on JSON parsing error
-        print("REACTIONS",len(all_reactions))
+        
         return all_reactions[:reaction_limit]
 
  
     
-    def get_profile_posts(self, username, post_reactions="no", post_comments="no", post_limit=0,comment_limit=0,reaction_limit=0,media_flag="no"):
+    def get_profile_posts(self, username, post_reactions="no", post_comments="no", post_limit=0,comment_limit=0,reaction_limit=0,media_flag="no",job_id=0):
         """Fetches posts for a given LinkedIn username with optional reactions/comments and slicing."""
 
         if not username:
@@ -167,9 +166,11 @@ class LinkedinPostFetcher:
 
             filtered_data = []
             print("NUMBER OF POSTS", len(posts))
-           
+            count=1
             for post in posts:
                 if isinstance(post, dict):
+                    print("COUNT",count)
+                    count=count+1
                     post_url = post.get("postUrl")
                     share_url = post.get("shareUrl")
 
@@ -187,7 +188,7 @@ class LinkedinPostFetcher:
                         "video": post.get("video") or []
                     }
 
-                    saved_post = services['activity_posts_service'].save_post(temporary_data, username)
+                    saved_post = services['activity_posts_service'].save_post(temporary_data, username,job_id)
 
                     if saved_post is None:
                         print(f"Post already exists for URL: {post_url}")

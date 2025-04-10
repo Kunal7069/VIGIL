@@ -62,3 +62,14 @@ class JobTrackerService:
         except SQLAlchemyError:
             self.db.rollback()
             raise
+        
+    def get_job_by_id(self, job_id: int):
+        """
+        Retrieve a specific job tracker entry by its ID.
+        """
+        try:
+            job = self.db.query(JobTracker).filter(JobTracker.id == job_id).first()
+            return job
+        except SQLAlchemyError:
+            self.db.rollback()
+            raise
