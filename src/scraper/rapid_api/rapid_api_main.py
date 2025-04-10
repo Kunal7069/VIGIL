@@ -1,7 +1,8 @@
 import os
-from fastapi import FastAPI, HTTPException,APIRouter
+from fastapi import Depends,FastAPI, HTTPException,APIRouter, Header
 from pydantic import BaseModel, Field, model_validator
 from dotenv import load_dotenv
+import json
 from scraper.rapid_api.rapid_manager.activity_manager import LinkedInActivityFetcher
 from scraper.rapid_api.rapid_manager.post_manager import LinkedinPostFetcher  
 from scraper.rapid_api.rapid_manager.company_manager import CompanyPostFetcher
@@ -19,7 +20,32 @@ linkedin = LinkedInActivityFetcher(RAPID_API_KEY)
 post_fetcher = LinkedinPostFetcher(RAPID_API_KEY)
 company_post_fetcher = CompanyPostFetcher(RAPID_API_KEY)
 
-@router.post("/get-activity-data")
+ACCESS_TOKEN = os.getenv("ACCESS_TOKEN")
+
+async def verify_token(authorization: str = Header(None)):
+    if not authorization:
+        raise HTTPException(status_code=401, detail="Authorization header missing")
+
+    try:
+        scheme, token = authorization.split()
+        if scheme.lower() != "bearer" or token != ACCESS_TOKEN:
+            raise HTTPException(status_code=401, detail="Invalid or missing token")
+    except ValueError:
+        raise HTTPException(status_code=401, detail="Invalid Authorization header format")
+    
+def make_json_serializable(data):
+    if isinstance(data, dict):
+        return {k: make_json_serializable(v) for k, v in data.items()}
+    elif isinstance(data, list):
+        return [make_json_serializable(v) for v in data]
+    else:
+        try:
+            json.dumps(data)
+            return data
+        except TypeError:
+            return str(data)  # Fallback: convert un-serializable objects to string
+    
+@router.post("/get-activity-data", dependencies=[Depends(verify_token)])
 async def get_linkedin_data(req: ActivityRequest):
     response_data = {}
     try:
@@ -66,10 +92,20 @@ async def get_linkedin_data(req: ActivityRequest):
             )
 
         # Mark job as completed
-        services['activity_job_track'].update_status(job_id, "completed")
+        print("RESPONSE DATA", response_data)
+        if isinstance(response_data, dict) and all(
+            isinstance(v, dict) and 'error' in v for v in response_data.values()
+        ):
+            services['activity_job_track'].update_status(job_id, "cancelled")
+        else:
+            services['activity_job_track'].update_status(job_id, "completed")
+
+        print("RETURN")
         return response_data
 
     except Exception as e:
         # On failure, mark job as cancelled and add remark
         services['activity_job_track'].update_status(job_id, "cancelled")
-        raise HTTPException(status_code=500, detail="Failed to fetch LinkedIn activity data.")
+        print(e)
+        raise HTTPException(status_code=500, detail=e)
+        # return {"error": str(e)}

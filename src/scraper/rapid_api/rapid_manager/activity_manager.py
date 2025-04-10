@@ -99,7 +99,9 @@ class LinkedInActivityFetcher:
     def extract_comment_details(self, username, post_reactions, post_comments, post_limit, comment_limit, reaction_limit, job_id,media_flag):
         try:
             comments = self.get_comments(username)
-
+            print("COMMENTS",comments)
+            if "message" in comments and not comments.get("success", False):
+                return {"error":comments["message"]}
             if "data" in comments and isinstance(comments["data"], list) and len(comments["data"]) > 0:
                 service = services['activity_comments_service']
                 processed_comments = []
@@ -142,21 +144,25 @@ class LinkedInActivityFetcher:
 
                     # Fetch related data only if new comment was added
                     commentors = linkedin_post_fetcher.get_comments(urn, comment_limit) if post_comments == "yes" and urn else []
+                    comment_data['commentors']= commentors
                     service.save_commentors(comment_obj.id, commentors)
                     
                     reactors = linkedin_post_fetcher.get_reactions(share_url, reaction_limit) if post_reactions == "yes" and post_url else []
+                    comment_data['reactors']= reactors
                     service.save_reactors(comment_obj.id, reactors)
                     
                     media = comment.get("image", []) or []
+                    comment_data['images']= media
                     service.save_media(comment_obj.id, media,media_flag)
                     
                     video = comment.get("video", []) or []
+                    comment_data['videos']= video
                     service.save_video(comment_obj.id, video)
 
             
                     # Track processed
                     processed_comments.append(comment_data)
-
+                print("PROCESSED_DATA",processed_comments)
                 return processed_comments
 
             else:
@@ -175,7 +181,9 @@ class LinkedInActivityFetcher:
             transform to DB model format, and save to DB.
             """
             likes_data = self.get_likes(username,post_limit)
-            
+            print("REACTIONS",likes_data)
+            if "message" in likes_data and not likes_data.get("success", False):
+                return {"error":likes_data["message"]}
             if (len(likes_data) > 0
             ):
                 processed_reacions = []
@@ -223,10 +231,12 @@ class LinkedInActivityFetcher:
     def extract_clean_user_profile(self, username,job_id):
         try:
             profile_data = self.get_profile(username)
+            if "message" in profile_data:
+                return {"error":profile_data["message"]}
             # Base fields
             result = {
                 "username": profile_data.get("username", username),
-                "first_name": profile_data.get("firstName", ""),
+                "first_name": profile_data.get("firstName"),
                 "last_name": profile_data.get("lastName", ""),
                 "profile_picture": profile_data.get("profilePicture", ""),
                 "geo": profile_data.get("geo", {}),
@@ -297,6 +307,9 @@ class LinkedInActivityFetcher:
     def extract_clean_company_profile(self, username,job_id):
         try:
             company_profile_data=self.get_company_profile(username)
+            print(company_profile_data)
+            if "message" in company_profile_data and not company_profile_data.get("success", False):
+                return {"error":company_profile_data["message"]}
             company_data = company_profile_data['data']
             company_data["username"] = username
             print(company_data)

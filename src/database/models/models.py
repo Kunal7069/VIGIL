@@ -372,6 +372,6 @@ class JobTracker(Base):
     reaction_limit = Column(Integer, nullable=True)
 
     status = Column(Enum(JobStatusEnum), default=JobStatusEnum.pending)
-    remark = Column(Text, nullable=True)
+    remark = Column(String, nullable=True) 
 
     created_at = Column(TIMESTAMP, server_default=func.now())

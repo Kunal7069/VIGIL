@@ -34,6 +34,8 @@ class LinkedinPostFetcher:
         try:
             json_data = json.loads(data.decode("utf-8"))
             print("json_data",json_data)
+            if "message" in json_data and not json_data.get("success", False):
+                    return {"error":json_data["message"]}
             comments_list = json_data.get('data', {}).get('comments', [])
             
             if not isinstance(comments_list, list):
@@ -80,6 +82,8 @@ class LinkedinPostFetcher:
             try:
                 json_data = json.loads(data.decode("utf-8"))
                 print(json_data)
+                if "message" in json_data and not json_data.get("success", False):
+                    return {"error":json_data["message"]}
                 reactions_list = json_data.get("data", {}).get('items', [])
 
                 if not reactions_list:
@@ -134,9 +138,12 @@ class LinkedinPostFetcher:
             conn.request("GET", endpoint, headers=headers)
             res = conn.getresponse()
             data = res.read()
-
+         
             try:
                 json_data = json.loads(data.decode("utf-8"))
+                print("json_data",json_data)
+                if "message" in json_data and not json_data.get("success", False):
+                    return {"error":json_data["message"]}
                 posts = json_data.get("data", [])
                 all_posts.extend(posts)
 

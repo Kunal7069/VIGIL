@@ -69,6 +69,8 @@ class CompanyPostFetcher:
 
             try:
                 json_data = json.loads(data.decode("utf-8"))
+                if "message" in json_data and not json_data.get("success", False):
+                    return {"error":json_data["message"]}
                 posts = json_data.get("data", [])
                 all_posts.extend(posts)
 
