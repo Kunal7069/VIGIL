@@ -133,6 +133,30 @@ def credit_estimation(req: ActivityRequest):
 
     total_credits = 0
     p = price_management
+    
+    if req.type == "company":
+        if req.profile_info == "yes":
+            # Add 1 credit for enabling post_scrap
+            total_credits += p.PROFILE_CREDIT
+        
+        if req.post_scrap == "yes":
+            # Add credits for the number of posts to be scraped (batches of 50)
+            post_batches = ceil(req.post_limit / p.POSTS_BATCH)
+            total_credits += post_batches * p.POSTS_CREDIT
+
+            if req.post_comments == "yes":
+                # Add 1 credit per post to get commenters
+                total_credits += req.post_limit * p.COMMENTORS_CREDIT
+
+            if req.post_reactions == "yes":
+                for _ in range(req.post_limit):
+                    reactors = req.reaction_limit
+                    if reactors <= p.REACTORS_BATCH:
+                        total_credits += p.WITHOUT_POST_URL_REACTORS_CREDIT_1
+                    else:
+                        remaining = reactors - p.REACTORS_BATCH
+                        batches = ceil(remaining / p.REACTORS_BATCH)
+                        total_credits += p.WITHOUT_POST_URL_REACTORS_CREDIT_1 + (batches * p.WITHOUT_POST_URL_REACTORS_CREDIT_2)
 
     if req.type == "person":
         if req.profile_info == "yes":

@@ -95,7 +95,7 @@ class CompanyPostFetcher:
                 if isinstance(post, dict):
                     post_url = post.get("postUrl")
                     share_url = post.get("shareUrl", "none")
-                   
+                    print("shareurl",share_url,post_url)
                     if share_url == "none" and post_url:
                         share_url = self.fetch_share_url(post_url)
                     
