@@ -22,6 +22,8 @@ async def root():
 # Include routers
 app.include_router(rapid_api, prefix="/rapid", tags=["Activity"])
 app.include_router(read_rapid_api, prefix="/read-rapid", tags=["Scraper"])
+
+# Not in use
 app.include_router(apify_api, prefix="/apify", tags=["Scraper"])
 
 # if __name__ == "__main__":

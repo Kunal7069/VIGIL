@@ -7,6 +7,7 @@ from scraper.rapid_api.rapid_manager.activity_manager import LinkedInActivityFet
 from scraper.rapid_api.rapid_manager.post_manager import LinkedinPostFetcher  
 from scraper.rapid_api.rapid_manager.company_manager import CompanyPostFetcher
 from scraper.rapid_api.model.rapid_model import ActivityRequest
+from read_data.rapid_api import get_activity_comments,get_activity_reactions,get_person_profile,get_company_profile,get_posts
 from database.main import services
 from read_data.rapid_api import get_job_data
 # Load environment variables
@@ -49,66 +50,87 @@ def make_json_serializable(data):
 @router.post("/get-activity-data", dependencies=[Depends(verify_token)])
 async def get_linkedin_data(req: ActivityRequest):
     response_data = {}
-    try:
-        print(req)
-        data = req.model_dump()
-        data.pop("media_flag", None)
-        job_id = services['activity_job_track'].create_job_entry(data)
-        print(job_id)
-
-        if req.profile_info == "yes" and req.type=="person":
-            response_data["profile"] = linkedin.extract_clean_user_profile(req.username, job_id)
+    if req.caching == "yes":
         
+        if req.profile_info == "yes" and req.type=="person":
+                response_data["profile"] = get_person_profile(req.username)
+            
         if req.profile_info == "yes" and req.type=="company":
-            response_data["profile"] = linkedin.extract_clean_company_profile(req.username, job_id)
+            response_data["profile"] = get_company_profile(req.username)
 
         if req.activity_comments == "yes":
-            response_data["comments"] = linkedin.extract_comment_details(req.username,req.post_reactions,req.post_comments,req.post_limit,req.comment_limit,req.reaction_limit,job_id,req.media_flag)
+            response_data["comments"] = get_activity_comments(req.username)
 
         if req.activity_reactions == "yes":
-            response_data["reactions"] = linkedin.extract_likes_details(req.username,req.post_reactions,req.post_comments,req.post_limit,req.comment_limit,req.reaction_limit ,job_id)
-
-        if req.post_scrap == "yes" and req.type=="person":
-            response_data["posts"] = post_fetcher.get_profile_posts(
-                req.username,
-                req.post_reactions,
-                req.post_comments,
-                req.post_limit,
-                req.comment_limit,
-                req.reaction_limit,
-                req.media_flag,
-                job_id
-            )
+            response_data["reactions"] = get_activity_reactions(req.username)
+        
+        if req.post_scrap == "yes":
+            response_data["posts"] = get_posts(req.username)
             
-        if req.post_scrap == "yes" and req.type=="company":
-            print("COMPANY")
-            response_data["posts"] = company_post_fetcher.get_company_posts(
-                req.username,
-                req.post_reactions,
-                req.post_comments,
-                req.post_limit,
-                req.comment_limit,
-                req.reaction_limit,
-                req.media_flag,
-                job_id
-                
-            )
-
-        # Mark job as completed
-        print("RESPONSE DATA", response_data)
-        if isinstance(response_data, dict) and all(
-            isinstance(v, dict) and 'error' in v for v in response_data.values()
-        ):
-            services['activity_job_track'].update_status(job_id, "cancelled")
-        else:
-            services['activity_job_track'].update_status(job_id, "completed")
-
-        print("RETURN")
         return response_data
+    else:
+        
+        try:
+            print(req)
+            data = req.model_dump()
+            data.pop("media_flag", None)
+            data.pop("caching", None)
+            job_id = services['activity_job_track'].create_job_entry(data)
+            print(job_id)
 
-    except Exception as e:
-        # On failure, mark job as cancelled and add remark
-        services['activity_job_track'].update_status(job_id, "cancelled")
-        data = get_job_data(job_id)
-        return data
+            if req.profile_info == "yes" and req.type=="person":
+                response_data["profile"] = linkedin.extract_clean_user_profile(req.username, job_id)
+            
+            if req.profile_info == "yes" and req.type=="company":
+                response_data["profile"] = linkedin.extract_clean_company_profile(req.username, job_id)
+
+            if req.activity_comments == "yes":
+                response_data["comments"] = linkedin.extract_comment_details(req.username,req.post_reactions,req.post_comments,req.post_limit,req.comment_limit,req.reaction_limit,job_id,req.media_flag)
+
+            if req.activity_reactions == "yes":
+                response_data["reactions"] = linkedin.extract_likes_details(req.username,req.post_reactions,req.post_comments,req.post_limit,req.comment_limit,req.reaction_limit ,job_id)
+
+            if req.post_scrap == "yes" and req.type=="person":
+                response_data["posts"] = post_fetcher.get_profile_posts(
+                    req.username,
+                    req.post_reactions,
+                    req.post_comments,
+                    req.post_limit,
+                    req.comment_limit,
+                    req.reaction_limit,
+                    req.media_flag,
+                    job_id
+                )
+                
+            if req.post_scrap == "yes" and req.type=="company":
+                print("COMPANY")
+                response_data["posts"] = company_post_fetcher.get_company_posts(
+                    req.username,
+                    req.post_reactions,
+                    req.post_comments,
+                    req.post_limit,
+                    req.comment_limit,
+                    req.reaction_limit,
+                    req.media_flag,
+                    job_id
+                    
+                )
+
+            # Mark job as completed
+            print("RESPONSE DATA", response_data)
+            if isinstance(response_data, dict) and all(
+                isinstance(v, dict) and 'error' in v for v in response_data.values()
+            ):
+                services['activity_job_track'].update_status(job_id, "cancelled")
+            else:
+                services['activity_job_track'].update_status(job_id, "completed")
+
+            print("RETURN")
+            return response_data
+
+        except Exception as e:
+            # On failure, mark job as cancelled and add remark
+            services['activity_job_track'].update_status(job_id, "cancelled")
+            data = get_job_data(job_id)
+            return data
         

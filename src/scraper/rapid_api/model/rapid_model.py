@@ -13,7 +13,7 @@ class ActivityRequest(BaseModel):
     comment_limit: int | None = None
     reaction_limit: int | None = None
     media_flag : str = Field(..., pattern="^(yes|no)$")
-    
+    caching : str = Field(..., pattern="^(yes|no)$")
     
 
     @model_validator(mode="after")
