@@ -76,6 +76,10 @@ def get_job_data(id: int):
     return final_data
 
 
+@router.get("/verify_token", dependencies=[Depends(verify_token)])
+def verify_token_only():
+    return {"message": "Token is valid"}
+
 @router.get("/job-tracker")
 def job_tracker():
     data= services['activity_job_track'].get_all_jobs()
@@ -142,7 +146,7 @@ def search_posts(request: SearchPostsRequest):
 
     return {"total_fetched": len(collected_posts), "posts": collected_posts[:request.num_posts]}
 
-@router.post("/credit-estimation")
+@router.post("/credit-estimation", dependencies=[Depends(verify_token)])
 def credit_estimation(req: ActivityRequest):
     from settings.price_management import price_management
 

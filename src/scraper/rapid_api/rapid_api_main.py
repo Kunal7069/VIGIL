@@ -8,6 +8,7 @@ from scraper.rapid_api.rapid_manager.post_manager import LinkedinPostFetcher
 from scraper.rapid_api.rapid_manager.company_manager import CompanyPostFetcher
 from scraper.rapid_api.model.rapid_model import ActivityRequest
 from database.main import services
+from read_data.rapid_api import get_job_data
 # Load environment variables
 load_dotenv()
 
@@ -108,6 +109,6 @@ async def get_linkedin_data(req: ActivityRequest):
     except Exception as e:
         # On failure, mark job as cancelled and add remark
         services['activity_job_track'].update_status(job_id, "cancelled")
-        print(e)
-        raise HTTPException(status_code=500, detail=e)
-        # return {"error": str(e)}
+        data = get_job_data(job_id)
+        return data
+        
