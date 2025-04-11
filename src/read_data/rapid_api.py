@@ -150,95 +150,118 @@ def search_posts(request: SearchPostsRequest):
 def credit_estimation(req: ActivityRequest):
     from settings.price_management import price_management
 
-    total_credits = 0
+    max_credits = 0
+    min_credits = 0
     p = price_management
     
     if req.type == "company":
         if req.profile_info == "yes":
             # Add 1 credit for enabling post_scrap
-            total_credits += p.PROFILE_CREDIT
-        
+            max_credits += 1
+            min_credits += 1
+            
         if req.post_scrap == "yes":
             # Add credits for the number of posts to be scraped (batches of 50)
-            post_batches = ceil(req.post_limit / p.POSTS_BATCH)
-            total_credits += post_batches * p.POSTS_CREDIT
-
+            post_batches = ceil(req.post_limit / 50)
+            max_credits += post_batches * 1
+            min_credits += post_batches * 1
+            
             if req.post_comments == "yes":
                 # Add 1 credit per post to get commenters
-                total_credits += req.post_limit * p.COMMENTORS_CREDIT
-
+                max_credits += req.post_limit * 1
+                min_credits += req.post_limit * 1
+                
             if req.post_reactions == "yes":
+                count=1
                 for _ in range(req.post_limit):
+                    count=count+1
                     reactors = req.reaction_limit
-                    if reactors <= p.REACTORS_BATCH:
-                        total_credits += p.WITHOUT_POST_URL_REACTORS_CREDIT_1
+                    if reactors <= 49:
+                        max_credits += 3
+                        min_credits += 1
                     else:
-                        remaining = reactors - p.REACTORS_BATCH
-                        batches = ceil(remaining / p.REACTORS_BATCH)
-                        total_credits += p.WITHOUT_POST_URL_REACTORS_CREDIT_1 + (batches * p.WITHOUT_POST_URL_REACTORS_CREDIT_2)
+                        remaining = reactors - 49
+                        batches = ceil(remaining / 49)
+                        max_credits += 3 + (batches * 2)
+                        min_credits += 1 +(batches * 1)
 
     if req.type == "person":
         if req.profile_info == "yes":
             # Add 1 credit for enabling post_scrap
-            total_credits += p.PROFILE_CREDIT
+            max_credits += 1
+            min_credits += 1
         
         if req.post_scrap == "yes":
             # Add credits for the number of posts to be scraped (batches of 50)
-            post_batches = ceil(req.post_limit / p.POSTS_BATCH)
-            total_credits += post_batches * p.POSTS_CREDIT
+            post_batches = ceil(req.post_limit / 50)
+            max_credits += post_batches * 1
+            min_credits += post_batches * 1
 
             if req.post_comments == "yes":
                 # Add 1 credit per post to get commenters
-                total_credits += req.post_limit * p.COMMENTORS_CREDIT
+                max_credits += req.post_limit * 1
+                min_credits += req.post_limit * 1
 
             if req.post_reactions == "yes":
                 for _ in range(req.post_limit):
                     reactors = req.reaction_limit
                     if reactors <= p.REACTORS_BATCH:
-                        total_credits += p.POST_URL_REACTORS_CREDIT_1
+                        max_credits += 1
+                        min_credits += 1
                     else:
                         remaining = reactors - p.REACTORS_BATCH
                         batches = ceil(remaining / p.REACTORS_BATCH)
-                        total_credits += p.POST_URL_REACTORS_CREDIT_1 + (batches * p.POST_URL_REACTORS_CREDIT_2)
+                        max_credits += 1 + (batches * 1)
+                        min_credits += 1 +(batches * 1)
         
         if req.activity_comments == "yes":
     
             # Add credits for the number of posts to be scraped (batches of 50)
-            total_credits += p.ACTIVITY_COMMENTS_CREDIT
-
+            max_credits += 1
+            min_credits += 1
+            
             if req.post_comments == "yes":
                 # Add 1 credit per post to get commenters
-                total_credits += req.post_limit * p.COMMENTORS_CREDIT
-
+                max_credits += req.post_limit * 1
+                min_credits += req.post_limit * 1
+                
             if req.post_reactions == "yes":
                 for _ in range(req.post_limit):
+                    count=count+1
                     reactors = req.reaction_limit
-                    if reactors <= p.REACTORS_BATCH:
-                        total_credits += p.WITHOUT_POST_URL_REACTORS_CREDIT_1
+                    if reactors <= 49:
+                        max_credits += 3
+                        min_credits += 1
                     else:
-                        remaining = reactors - p.REACTORS_BATCH
-                        batches = ceil(remaining / p.REACTORS_BATCH)
-                        total_credits += p.WITHOUT_POST_URL_REACTORS_CREDIT_1 + (batches * p.WITHOUT_POST_URL_REACTORS_CREDIT_2)
+                        remaining = reactors - 49
+                        batches = ceil(remaining / 49)
+                        max_credits += 3 + (batches * 2)
+                        min_credits += 1 +(batches * 1)
         
         if req.activity_reactions == "yes":
 
             # Add credits for the number of posts to be scraped (batches of 50)
-            activity_reactions_batches = ceil(req.post_limit / p.ACTIVITY_REACTIONS_BATCH)
-            total_credits += activity_reactions_batches * p.ACTIVITY_REACTIONS_CREDIT
+            activity_reactions_batches = ceil(req.post_limit / 100)
+            max_credits += activity_reactions_batches * 1
+            min_credits += activity_reactions_batches * 1
 
 
             if req.post_comments == "yes":
                 # Add 1 credit per post to get commenters
-                total_credits += req.post_limit * p.COMMENTORS_CREDIT
+                max_credits += req.post_limit * 1
+                min_credits += req.post_limit * 1
 
             if req.post_reactions == "yes":
                 for _ in range(req.post_limit):
+                    count=count+1
                     reactors = req.reaction_limit
-                    if reactors <= p.REACTORS_BATCH:
-                        total_credits += p.POST_URL_REACTORS_CREDIT_1
+                    if reactors <= 49:
+                        max_credits += 3
+                        min_credits += 1
                     else:
-                        remaining = reactors - p.REACTORS_BATCH
-                        batches = ceil(remaining / p.REACTORS_BATCH)
-                        total_credits += p.POST_URL_REACTORS_CREDIT_1 + (batches * p.POST_URL_REACTORS_CREDIT_2)
+                        remaining = reactors - 49
+                        batches = ceil(remaining / 49)
+                        max_credits += 3 + (batches * 2)
+                        min_credits += 1 +(batches * 1)
 
-    return {"total_credits": total_credits}
+    return {"max_credits": max_credits,"min_credits":min_credits}

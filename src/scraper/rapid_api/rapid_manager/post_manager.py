@@ -192,23 +192,23 @@ class LinkedinPostFetcher:
 
                     if saved_post is None:
                         print(f"Post already exists for URL: {post_url}")
-                        continue
+                        
+                    else:
+                        # STEP 2: Save media and videos
+                        services['activity_posts_service'].save_media(saved_post.id, temporary_data.get("media", []), media_flag)
+                        services['activity_posts_service'].save_videos(saved_post.id, temporary_data.get("video", []))
 
-                    # STEP 2: Save media and videos
-                    services['activity_posts_service'].save_media(saved_post.id, temporary_data.get("media", []), media_flag)
-                    services['activity_posts_service'].save_videos(saved_post.id, temporary_data.get("video", []))
+                        # STEP 3: Fetch and save comments
+                        comments = self.get_comments(urn, comment_limit) if post_comments == "yes" and urn else []
+                        print("NUMBER OF COMMENTS", len(comments))
+                        services['activity_posts_service'].save_comments(saved_post.id, comments[:comment_limit])
 
-                    # STEP 3: Fetch and save comments
-                    comments = self.get_comments(urn, comment_limit) if post_comments == "yes" and urn else []
-                    print("NUMBER OF COMMENTS", len(comments))
-                    services['activity_posts_service'].save_comments(saved_post.id, comments[:comment_limit])
+                        # STEP 4: Fetch and save reactions
+                        reactions = self.get_reactions(share_url, reaction_limit) if post_reactions == "yes" and post_url else []
+                        print("NUMBER OF REACTIONS", len(reactions))
+                        services['activity_posts_service'].save_reactions(saved_post.id, reactions[:reaction_limit])
 
-                    # STEP 4: Fetch and save reactions
-                    reactions = self.get_reactions(share_url, reaction_limit) if post_reactions == "yes" and post_url else []
-                    print("NUMBER OF REACTIONS", len(reactions))
-                    services['activity_posts_service'].save_reactions(saved_post.id, reactions[:reaction_limit])
-
-                    filtered_data.append({**temporary_data, "comments": comments, "reactions": reactions})
+                        filtered_data.append({**temporary_data, "comments": comments, "reactions": reactions})
 
             return filtered_data
 
