@@ -8,7 +8,7 @@ class ActivityReactionsService:
         self.db = db
 
     
-    def save_batch_activity_reactions(self, posts_data: list[dict]):
+    def save_batch_activity_reactions(self, posts_data: list[dict],job_id :int):
         """
         Save a batch of activity post records along with commentors and reactors.
         - Avoid duplicates (by post_url)
@@ -29,6 +29,7 @@ class ActivityReactionsService:
                 # Create the activity reaction entry
                 post = ActivityReactions(
                     username=data["username"],
+                    job_id= job_id,
                     action=data["action"],
                     post_text=data["post_text"],
                     post_url=data["post_url"],
@@ -85,6 +86,25 @@ class ActivityReactionsService:
             return (
                 self.db.query(ActivityReactions)
                 .filter(ActivityReactions.username == username)
+                .options(
+                    joinedload(ActivityReactions.commentors),
+                    joinedload(ActivityReactions.reactors)
+                )
+                .order_by(ActivityReactions.created_at.desc())
+                .all()
+            )
+        except SQLAlchemyError as e:
+            print(f"Database error: {e}")
+            return []
+    
+    def get_activity_reactions_by_username_and_job(self, username: str,job_id:int):
+        """
+        Fetch all activity posts for a given LinkedIn username including reactors and commentors.
+        """
+        try:
+            return (
+                self.db.query(ActivityReactions)
+                .filter(ActivityReactions.username == username,ActivityReactions.job_id == job_id)
                 .options(
                     joinedload(ActivityReactions.commentors),
                     joinedload(ActivityReactions.reactors)

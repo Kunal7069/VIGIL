@@ -217,7 +217,7 @@ class LinkedInActivityFetcher:
                         "reactors":reactors
                     })
                    
-                services['activity_reactions_service'].save_batch_activity_reactions(processed_reacions)
+                services['activity_reactions_service'].save_batch_activity_reactions(processed_reacions,job_id)
 
                 return processed_reacions
 

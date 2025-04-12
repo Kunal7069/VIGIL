@@ -73,6 +73,8 @@ def get_job_data(id: int):
         final_data['posts_data']=services['activity_posts_service'].get_posts_by_username_and_job(data.username,data.id)
     if data.activity_comments=="yes":
         final_data['activity_comments']=services['activity_comments_service'].get_activity_comments_by_username_and_job(data.username,data.id)
+    if data.activity_reactions=="yes":
+        final_data['activity_reactions']=services['activity_reactions_service'].get_activity_reactions_by_username_and_job(data.username,data.id)
     return final_data
 
 
@@ -227,7 +229,7 @@ def credit_estimation(req: ActivityRequest):
                 
             if req.post_reactions == "yes":
                 for _ in range(req.post_limit):
-                    count=count+1
+                   
                     reactors = req.reaction_limit
                     if reactors <= 49:
                         max_credits += 3
@@ -253,7 +255,7 @@ def credit_estimation(req: ActivityRequest):
 
             if req.post_reactions == "yes":
                 for _ in range(req.post_limit):
-                    count=count+1
+                    
                     reactors = req.reaction_limit
                     if reactors <= 49:
                         max_credits += 3

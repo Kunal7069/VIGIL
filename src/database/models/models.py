@@ -5,43 +5,6 @@ from sqlalchemy.orm import relationship
 import enum
 
 
-# class ActivityComments(Base):
-#     __tablename__ = "activity_comments"  # Renamed to use underscores
-
-#     id = Column(Integer, primary_key=True, index=True)
-#     username = Column(String(100), nullable=False, index=True)
-    
-#     # Author info
-#     first_name = Column(String(100), nullable=False)
-#     last_name = Column(String(100), nullable=False)
-#     headline = Column(String(300), nullable=True)
-#     profile_url = Column(String(300), nullable=False)
-
-#     # Post info
-#     post_text = Column(Text, nullable=False)
-#     highlighted_comment = Column(Text, nullable=True)
-#     post_url = Column(String(300), nullable=False, unique=True)
-
-#     # Reaction counts
-#     total_reactions = Column(Integer, default=0)
-#     like_count = Column(Integer, default=0)
-#     appreciation_count = Column(Integer, default=0)
-#     empathy_count = Column(Integer, default=0)
-#     praise_count = Column(Integer, default=0)
-#     funny_count = Column(Integer, default=0)
-
-#     # Engagement counts
-#     comments_count = Column(Integer, default=0)
-#     reposts_count = Column(Integer, default=0)
-
-#     # Timestamps
-#     created_at = Column(TIMESTAMP, server_default=func.now())
-
-#     # Relationships
-#     commentors = relationship("ActivityCommentsCommentor", back_populates="activity_comment", cascade="all, delete-orphan")
-#     reactors = relationship("ActivityCommentsReactor", back_populates="activity_comment", cascade="all, delete-orphan")
-#     media = relationship("ActivityCommentsMedia", back_populates="activity_comment", cascade="all, delete-orphan")
-#     videos = relationship("ActivityCommentsVideo", back_populates="activity_comment", cascade="all, delete-orphan")
 
 
 class ActivityCommentsCommentor(Base):
@@ -94,39 +57,39 @@ class ActivityCommentsVideo(Base):
     activity_comment = relationship("ActivityComments", back_populates="videos")
     
 
-class ActivityReactions(Base):
-    __tablename__ = "Activity Reactions"
+# class ActivityReactions(Base):
+#     __tablename__ = "Activity Reactions"
 
-    id = Column(Integer, primary_key=True, index=True)
+#     id = Column(Integer, primary_key=True, index=True)
     
-    # Profile we're tracking (activity is from this person's feed)
-    username = Column(String(100), nullable=False, index=True)
+#     # Profile we're tracking (activity is from this person's feed)
+#     username = Column(String(100), nullable=False, index=True)
 
-    # Action info
-    action = Column(String(300), nullable=False)
+#     # Action info
+#     action = Column(String(300), nullable=False)
 
-    # Post content
-    post_text = Column(Text, nullable=False)
-    post_url = Column(String(500), nullable=False, unique=True)
+#     # Post content
+#     post_text = Column(Text, nullable=False)
+#     post_url = Column(String(500), nullable=False, unique=True)
 
-    # Author info
-    first_name = Column(String(100), nullable=False)
-    last_name = Column(String(100), nullable=False)
-    headline = Column(String(300), nullable=True)
-    profile_url = Column(String(300), nullable=False)
+#     # Author info
+#     first_name = Column(String(100), nullable=False)
+#     last_name = Column(String(100), nullable=False)
+#     headline = Column(String(300), nullable=True)
+#     profile_url = Column(String(300), nullable=False)
 
-    # Engagement data
-    total_reactions = Column(Integer, default=0)
-    like_count = Column(Integer, default=0)
-    empathy_count = Column(Integer, default=0)
-    comments_count = Column(Integer, default=0)
+#     # Engagement data
+#     total_reactions = Column(Integer, default=0)
+#     like_count = Column(Integer, default=0)
+#     empathy_count = Column(Integer, default=0)
+#     comments_count = Column(Integer, default=0)
 
-    # Timestamps
-    created_at = Column(TIMESTAMP, server_default=func.now())
+#     # Timestamps
+#     created_at = Column(TIMESTAMP, server_default=func.now())
 
-    # Relationships
-    commentors = relationship("ActivityReactionsCommentor", back_populates="activity_reaction", cascade="all, delete-orphan")
-    reactors = relationship("ActivityReactionsReactor", back_populates="activity_reaction", cascade="all, delete-orphan")
+#     # Relationships
+#     commentors = relationship("ActivityReactionsCommentor", back_populates="activity_reaction", cascade="all, delete-orphan")
+#     reactors = relationship("ActivityReactionsReactor", back_populates="activity_reaction", cascade="all, delete-orphan")
 
 class ActivityReactionsCommentor(Base):
     __tablename__ = "Activity Reactions Commentors"
@@ -403,6 +366,42 @@ class ActivityComments(Base):
     media = relationship("ActivityCommentsMedia", back_populates="activity_comment", cascade="all, delete-orphan")
     videos = relationship("ActivityCommentsVideo", back_populates="activity_comment", cascade="all, delete-orphan")
 
+
+class ActivityReactions(Base):
+    __tablename__ = "Activity Reactions"
+
+    id = Column(Integer, primary_key=True, index=True)
+    job_id = Column(Integer, ForeignKey("job_tracker.id"), nullable=True)
+    # Profile we're tracking (activity is from this person's feed)
+    username = Column(String(100), nullable=False, index=True)
+
+    # Action info
+    action = Column(String(300), nullable=False)
+
+    # Post content
+    post_text = Column(Text, nullable=False)
+    post_url = Column(String(500), nullable=False, unique=True)
+
+    # Author info
+    first_name = Column(String(100), nullable=False)
+    last_name = Column(String(100), nullable=False)
+    headline = Column(String(300), nullable=True)
+    profile_url = Column(String(300), nullable=False)
+
+    # Engagement data
+    total_reactions = Column(Integer, default=0)
+    like_count = Column(Integer, default=0)
+    empathy_count = Column(Integer, default=0)
+    comments_count = Column(Integer, default=0)
+
+    # Timestamps
+    created_at = Column(TIMESTAMP, server_default=func.now())
+
+    # Relationships
+    commentors = relationship("ActivityReactionsCommentor", back_populates="activity_reaction", cascade="all, delete-orphan")
+    reactors = relationship("ActivityReactionsReactor", back_populates="activity_reaction", cascade="all, delete-orphan")
+    job = relationship("JobTracker", back_populates="activity_reactions_entries")
+
 class JobTracker(Base):
     __tablename__ = "job_tracker"
 
@@ -424,3 +423,4 @@ class JobTracker(Base):
     
     company_profiles = relationship("CompanyProfile", back_populates="job", cascade="all, delete-orphan")
     activity_comments_entries = relationship("ActivityComments", back_populates="job", cascade="all, delete-orphan")
+    activity_reactions_entries = relationship("ActivityReactions", back_populates="job", cascade="all, delete-orphan")
