@@ -154,6 +154,49 @@ class LinkedInProfileService:
             "positions": positions,
             "full_positions": full_positions
         }
+        
+    def get_complete_person_profile(self, username: str):
+        """
+        Returns a complete profile bundle including:
+        - Basic profile
+        - Education entries
+        - Position entries
+        - Full position entries
+        """
+        profile = (
+            self.db.query(LinkedInProfile)
+            .filter(LinkedInProfile.username == username)
+            .first()
+        )
+
+        if not profile:
+            return None  # or raise an exception if preferred
+
+        educations = (
+            self.db.query(LinkedInEducation)
+            .filter(LinkedInEducation.username == username)
+            .all()
+        )
+
+        positions = (
+            self.db.query(LinkedInPosition)
+            .filter(LinkedInPosition.username == username)
+            .all()
+        )
+
+        full_positions = (
+            self.db.query(LinkedInFullPosition)
+            .filter(LinkedInFullPosition.username == username)
+            .all()
+        )
+
+        return {
+            "profile": profile,
+            "educations": educations,
+            "positions": positions,
+            "full_positions": full_positions
+        }
+    
     
     def create_company_profile(self, company_data: dict,job_id:str):
         """Creates and saves a new CompanyProfile entry in the database."""

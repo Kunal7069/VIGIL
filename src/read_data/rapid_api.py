@@ -46,7 +46,7 @@ def get_activity_reactions(username: str):
 
 @router.get("/profile/{username}")
 def get_person_profile(username: str):
-    data= services['activity_profile_service'].get_complete_profile_by_username(username)
+    data= services['activity_profile_service'].get_complete_person_profile(username)
     return data
 
 @router.get("/company/{username}")
