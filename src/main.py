@@ -17,7 +17,7 @@ app.add_middleware(
 
 @app.get("/")
 async def root():
-    return {"message": "Server is started"}
+    return {"message": "Server Instance is ready to use"}
 
 # Include routers
 app.include_router(rapid_api, prefix="/rapid", tags=["Activity"])
